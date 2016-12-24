@@ -22,22 +22,22 @@ public class BackTestJob {
     private static final Logger logger = LoggerFactory.getLogger(BackTestJob.class);
 
     @Autowired
-    ExchangeRepository exchangeRepository;
+    private ExchangeRepository exchangeRepository;
 
     @Autowired
-    SecurityRepository securityRepository;
+    private SecurityRepository securityRepository;
 
     @Autowired
-    SecurityPriceRepository securityPriceRepository;
+    private SecurityPriceRepository securityPriceRepository;
 
     @Autowired
-    TipRepository tipRepository;
+    private TipRepository tipRepository;
 
     @Autowired
-    TradingDateService tradingDateService;
+    private TradingDateService tradingDateService;
 
     @Autowired
-    VolumeExplosionDetector volumeExplosionDetector;
+    private VolumeExplosionDetector volumeExplosionDetector;
 
 
     @Scheduled(cron = "0 58 23 13 JUL ?")
