@@ -1,0 +1,12 @@
+security type,security category
+Ordinary Share,Equity
+Exchange Traded Fund,Equity
+Managed Fund,Equity
+Treasury Bill,Debt
+Treasury Note,Debt
+Treasury Bond,Debt
+Corporate Note,Debt
+Corporate Bond,Debt
+Bank Bill,Debt
+Preference Share,Hybrid
+Structured Product,Derivative
