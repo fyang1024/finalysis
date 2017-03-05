@@ -121,11 +121,4 @@ public class AsxDataLoaderJob {
             t.printStackTrace();
         }
     }
-
-    @Scheduled(cron = "0 49 23 * * SUN")
-    public void test() {
-        logger.info("Job triggered");
-        Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
-        volumeExplosionDetector.detectVolumeExplosion(exchange, SecurityPricePeriod.Day, tradingDateService.getLatestTradingDate(exchange));
-    }
 }

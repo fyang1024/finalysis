@@ -62,7 +62,7 @@ public class VolumeExplosionDetector {
         for (Security security : securities) {
             SecurityPrice securityPrice = securityPriceRepository.findByOpenDateAndSecurityAndPeriod(openDate, security, period);
             if (securityPrice != null && securityPrice.getEstimatedTurnover().compareTo(TURNOVER_THRESHOLD) > 0) {
-                Integer averageVolume = securityPriceRepository.findAverageVolumesLastPeriods(openDate, security.getId(), period.toString(), 90);
+                Integer averageVolume = securityPriceRepository.findAverageVolumesLastPeriods(openDate, security.getId(), period.toString(), 30);
                 if (averageVolume != null) {
                     Date startDate = org.apache.commons.lang3.time.DateUtils.addDays(openDate, -90);
                     if (securityPrice.getVolume() > MIN_TIMES * averageVolume &&
