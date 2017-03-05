@@ -9,6 +9,9 @@ import java.util.Date;
 @Entity
 public class Tip extends BaseEntity implements Comparable<Tip> {
 
+    public Tip() {
+    }
+
     @ManyToOne
     private Security security;
 

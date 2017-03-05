@@ -108,7 +108,7 @@ public class ExchangeLoader {
     }
 
     private String googleWebsite(Exchange exchange) {
-        WebDriver driver = new HtmlUnitDriver(BrowserVersion.FIREFOX_17);
+        WebDriver driver = new HtmlUnitDriver(BrowserVersion.CHROME);
         driver.get("http://www.google.com.au");
         WebElement queryInput = driver.findElement(By.name("q"));
         queryInput.sendKeys(exchange.getName());

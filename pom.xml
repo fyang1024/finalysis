@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.2.5.RELEASE</version>
+        <version>1.5.2.RELEASE</version>
     </parent>
 
     <groupId>com.finalysis.research</groupId>
@@ -21,7 +21,7 @@
     </properties>
 
     <build>
-        <finalName>finanlysis</finalName>
+        <finalName>finalysis</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -57,15 +57,9 @@
 
         <!-- Web Driver -->
         <dependency>
-            <groupId>org.seleniumhq.selenium.fluent</groupId>
-            <artifactId>fluent-selenium</artifactId>
-            <version>1.14.5</version>
-        </dependency>
-
-        <dependency>
-            <groupId>xml-apis</groupId>
-            <artifactId>xml-apis</artifactId>
-            <version>1.4.01</version>
+            <groupId>org.seleniumhq.selenium</groupId>
+            <artifactId>selenium-java</artifactId>
+            <version>3.2.0</version>
         </dependency>
 
         <!--  Spring dependencies  -->
@@ -78,24 +72,8 @@
             <artifactId>spring-data-jpa</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework.data</groupId>
-            <artifactId>spring-data-rest-webmvc</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-websocket</artifactId>
         </dependency>
 
         <!-- Java Mail -->
@@ -110,10 +88,6 @@
             <groupId>org.hibernate</groupId>
             <artifactId>hibernate-entitymanager</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.hibernate</groupId>
-            <artifactId>hibernate-validator</artifactId>
-        </dependency>
 
         <!-- MySQL -->
         <dependency>
@@ -126,21 +100,6 @@
             <groupId>com.kenai.nbpwr</groupId>
             <artifactId>org-apache-commons-dbcp</artifactId>
             <version>1.2.2-201002241055</version>
-        </dependency>
-
-        <!--  JEE Interfaces  -->
-        <dependency>
-            <groupId>javax.servlet</groupId>
-            <artifactId>javax.servlet-api</artifactId>
-        </dependency>
-        <!--  Data Utils  -->
-        <dependency>
-            <groupId>joda-time</groupId>
-            <artifactId>joda-time</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
         </dependency>
 
         <!--  Open CSV  -->

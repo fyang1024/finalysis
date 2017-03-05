@@ -20,7 +20,6 @@ import org.springframework.util.StringUtils;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.FilenameFilter;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -304,7 +303,7 @@ class AsxAnnouncementLoader implements AnnouncementLoader {
             if (fileOutputStream != null) {
                 IOUtils.closeQuietly(fileOutputStream);
             }
-            webClient.closeAllWindows();
+            webClient.close();
         }
     }
 

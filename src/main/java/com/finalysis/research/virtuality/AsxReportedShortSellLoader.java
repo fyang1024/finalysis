@@ -48,7 +48,7 @@ public class AsxReportedShortSellLoader implements ReportedShortSellLoader {
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
         } finally {
-            webClient.closeAllWindows();
+            webClient.close();
         }
     }
 

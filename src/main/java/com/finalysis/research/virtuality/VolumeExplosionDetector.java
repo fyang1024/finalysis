@@ -22,7 +22,7 @@ public class VolumeExplosionDetector {
 
     private static final Logger logger = LoggerFactory.getLogger(VolumeExplosionDetector.class);
     private static final BigDecimal TURNOVER_THRESHOLD = new BigDecimal("200000");
-    private static final Integer MIN_TIMES = 3;
+    private static final Integer MIN_TIMES = 5;
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");
     private static final BigDecimal STOP_LOSS_RATIO = new BigDecimal("0.9");
 
@@ -62,15 +62,11 @@ public class VolumeExplosionDetector {
         for (Security security : securities) {
             SecurityPrice securityPrice = securityPriceRepository.findByOpenDateAndSecurityAndPeriod(openDate, security, period);
             if (securityPrice != null && securityPrice.getEstimatedTurnover().compareTo(TURNOVER_THRESHOLD) > 0) {
-                List<Integer> volumesLastPeriods = securityPriceRepository.findVolumesLastPeriods(openDate, security.getId(), period.toString(), 5);
-                if (!volumesLastPeriods.isEmpty()) {
-                    Integer totalVolume = 0;
-                    for (Integer volume : volumesLastPeriods) {
-                        totalVolume += volume;
-                    }
-                    Integer averageVolume = totalVolume / volumesLastPeriods.size();
+                Integer averageVolume = securityPriceRepository.findAverageVolumesLastPeriods(openDate, security.getId(), period.toString(), 90);
+                if (averageVolume != null) {
+                    Date startDate = org.apache.commons.lang3.time.DateUtils.addDays(openDate, -90);
                     if (securityPrice.getVolume() > MIN_TIMES * averageVolume &&
-                            securityPriceRepository.findVolumeLargerDays(openDate, security.getId(), securityPrice.getVolume(), period.toString()) < 3) {
+                            securityPriceRepository.findVolumeLargerDays(startDate, openDate, security.getId(), securityPrice.getVolume(), period.toString()) == 0) {
                         logger.info(security.getCode());
                         BigDecimal stopLoss = securityPrice.getClosePrice().multiply(STOP_LOSS_RATIO).setScale(3, BigDecimal.ROUND_HALF_DOWN);
                         Tip tip = new Tip(TipType.VOLUME_EXPLOSION, openDate, security, security.getCode(), securityPrice.getClosePrice(), stopLoss);

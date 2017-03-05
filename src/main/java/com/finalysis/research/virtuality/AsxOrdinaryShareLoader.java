@@ -88,7 +88,7 @@ public class AsxOrdinaryShareLoader implements OrdinaryShareLoader {
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
         } finally {
-            webClient.closeAllWindows();
+            webClient.close();
         }
         logger.info("--Done--");
     }

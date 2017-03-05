@@ -1,6 +1,5 @@
 package com.finalysis.research.virtuality;
 
-import com.finalysis.research.DateUtils;
 import com.finalysis.research.reality.Exchange;
 import com.finalysis.research.reality.ExchangeRepository;
 import org.slf4j.Logger;
@@ -8,10 +7,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-
-import java.math.BigDecimal;
-import java.util.Date;
-import java.util.List;
 
 /**
  * Created by Fei on 28/08/2014.
@@ -125,5 +120,12 @@ public class AsxDataLoaderJob {
         } catch (Throwable t) {
             t.printStackTrace();
         }
+    }
+
+    @Scheduled(cron = "0 49 23 * * SUN")
+    public void test() {
+        logger.info("Job triggered");
+        Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
+        volumeExplosionDetector.detectVolumeExplosion(exchange, SecurityPricePeriod.Day, tradingDateService.getLatestTradingDate(exchange));
     }
 }
