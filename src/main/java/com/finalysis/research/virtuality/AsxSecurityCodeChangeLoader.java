@@ -83,7 +83,6 @@ public class AsxSecurityCodeChangeLoader implements SecurityCodeChangeLoader {
                 }
             }
             driver.close();
-            driver.quit();
             year++;
         }
         populateSecurity(exchange);

@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -62,8 +63,9 @@ public class VolumeExplosionDetector {
         for (Security security : securities) {
             SecurityPrice securityPrice = securityPriceRepository.findByOpenDateAndSecurityAndPeriod(openDate, security, period);
             if (securityPrice != null && securityPrice.getEstimatedTurnover().compareTo(TURNOVER_THRESHOLD) > 0) {
-                Integer averageVolume = securityPriceRepository.findAverageVolumesLastPeriods(openDate, security.getId(), period.toString(), 30);
-                if (averageVolume != null) {
+                List<Integer> volumes = securityPriceRepository.findVolumesLastPeriods(openDate, security.getId(), period.toString(), 30);
+                if (volumes != null && !volumes.isEmpty()) {
+                    Integer averageVolume = (int)volumes.stream().mapToInt(a -> a).average().getAsDouble();
                     Date startDate = org.apache.commons.lang3.time.DateUtils.addDays(openDate, -90);
                     if (securityPrice.getVolume() > MIN_TIMES * averageVolume &&
                             securityPriceRepository.findVolumeLargerDays(startDate, openDate, security.getId(), securityPrice.getVolume(), period.toString()) == 0) {

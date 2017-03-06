@@ -130,7 +130,6 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
             }
         }
         driver.close();
-        driver.quit();
     }
 
     private boolean hasText(List<WebElement> cells) {

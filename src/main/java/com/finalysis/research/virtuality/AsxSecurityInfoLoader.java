@@ -114,7 +114,6 @@ public class AsxSecurityInfoLoader implements SecurityInfoLoader {
 
                             securityRepository.delete(security);
                             driver.close();
-                            driver.quit();
                             continue;
                         }
                         security.setListingDate(listingDate);
@@ -162,7 +161,6 @@ public class AsxSecurityInfoLoader implements SecurityInfoLoader {
                 }
             }
             driver.close();
-            driver.quit();
         }
         logger.info("--Done--");
     }

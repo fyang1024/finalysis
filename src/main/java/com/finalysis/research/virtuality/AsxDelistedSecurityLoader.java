@@ -83,7 +83,6 @@ public class AsxDelistedSecurityLoader implements DelistedSecurityLoader {
             }
         }
         driver.close();
-        driver.quit();
         logger.info("--Done--");
     }
 
@@ -150,7 +149,6 @@ public class AsxDelistedSecurityLoader implements DelistedSecurityLoader {
             loadDelistedSecurity(exchange, driver.getCurrentUrl());
         }
         driver.close();
-        driver.quit();
     }
 
     public void loadDelistedSecurity(Exchange exchange, String href) {
@@ -203,7 +201,6 @@ public class AsxDelistedSecurityLoader implements DelistedSecurityLoader {
         }
 
         driver.close();
-        driver.quit();
     }
 
     private Security findOrCreateSecurity(Exchange exchange, WebDriver driver) {
@@ -488,7 +485,6 @@ public class AsxDelistedSecurityLoader implements DelistedSecurityLoader {
                 break;
             }
             driver.close();
-            driver.quit();
         }
         return listingDate;
     }
@@ -504,7 +500,6 @@ public class AsxDelistedSecurityLoader implements DelistedSecurityLoader {
             return oldCode;
         }
         driver.close();
-        driver.quit();
         logger.info("Couldn't find old code");
         return null;
     }

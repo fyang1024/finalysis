@@ -62,7 +62,6 @@ public class AsxUpcomingFloatDetailLoader implements UpcomingFloatDetailLoader {
             }
         }
         driver.close();
-        driver.quit();
         logger.info("--Done--");
     }
 }

@@ -55,7 +55,6 @@ public class AsxTradingCalendarLoader implements TradingCalendarLoader {
                 }
             }
             driver.close();
-            driver.quit();
             logger.info("--Done--");
         }
     }

@@ -65,7 +65,7 @@ public class AsxDataLoaderJob {
     @Autowired
     AsxUpcomingFloatDetailLoader asxUpcomingFloatDetailLoader;
 
-    @Scheduled(cron = "0 50 20 * * MON-FRI")
+    @Scheduled(cron = "0 05 21 * * MON-FRI")
     public void loadTodayAnnouncements() {
         Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
         announcementLoader.loadTodayAnnouncements(exchange);

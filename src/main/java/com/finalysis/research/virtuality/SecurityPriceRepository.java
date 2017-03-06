@@ -50,8 +50,8 @@ public interface SecurityPriceRepository extends JpaRepository<SecurityPrice, In
     @Query("select max(p.openDate) from SecurityPrice p where p.security = ?1 and p.period = ?2 and p.swingPointLow = TRUE")
     Date findLatestSwingPointLowDate(Security security, SecurityPricePeriod period);
 
-    @Query(value = "select avg(volume) from Security_Price p where p.open_date < ?1 and p.security = ?2 and p.period = ?3 order by p.open_date desc limit ?4", nativeQuery = true)
-    Integer findAverageVolumesLastPeriods(Date openDate, Integer securityId, String securityPeriodName, Integer number);
+    @Query(value = "select volume from Security_Price p where p.open_date < ?1 and p.security = ?2 and p.period = ?3 order by p.open_date desc limit ?4", nativeQuery = true)
+    List<Integer> findVolumesLastPeriods(Date openDate, Integer securityId, String securityPeriodName, Integer number);
 
     @Query(value = "select count(*) from Security_Price p where p.open_date >= ?1 and p.open_date < ?2 and p.security = ?3 and p.volume >= ?4 and p.period = ?5", nativeQuery = true)
     Integer findVolumeLargerDays(Date startDate, Date endDate, Integer securityId, Integer volume, String securityPeriodName);

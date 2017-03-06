@@ -102,7 +102,6 @@ public class AsxEtpLoader implements EtpLoader {
             }
         }
         driver.close();
-        driver.quit();
         logger.info("--Done--");
     }
 

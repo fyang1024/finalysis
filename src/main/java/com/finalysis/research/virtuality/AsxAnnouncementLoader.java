@@ -102,7 +102,6 @@ class AsxAnnouncementLoader implements AnnouncementLoader {
                 }
             }
             driver.close();
-            driver.quit();
         }
         logger.info("--Done--");
     }
@@ -198,7 +197,6 @@ class AsxAnnouncementLoader implements AnnouncementLoader {
                         }
                     }
                     driver.close();
-                    driver.quit();
                 }
             }
         }
@@ -235,10 +233,8 @@ class AsxAnnouncementLoader implements AnnouncementLoader {
                 logger.error(e.getMessage(), e);
             }
             partsDriver.close();
-            partsDriver.quit();
         }
         txtDriver.close();
-        txtDriver.quit();
         return pathBuilder.toString();
     }
 

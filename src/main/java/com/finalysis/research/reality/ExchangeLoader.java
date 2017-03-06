@@ -124,7 +124,6 @@ public class ExchangeLoader {
             return null;
         } finally {
             driver.close();
-            driver.quit();
         }
     }
 
