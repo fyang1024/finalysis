@@ -14,7 +14,6 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -22,8 +21,8 @@ import java.util.List;
 public class VolumeExplosionDetector {
 
     private static final Logger logger = LoggerFactory.getLogger(VolumeExplosionDetector.class);
-    private static final BigDecimal TURNOVER_THRESHOLD = new BigDecimal("200000");
-    private static final Integer MIN_TIMES = 5;
+    private static final BigDecimal TURNOVER_THRESHOLD = new BigDecimal("5000000");
+    private static final Integer MIN_TIMES = 8;
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");
     private static final BigDecimal STOP_LOSS_RATIO = new BigDecimal("0.9");
 
@@ -63,10 +62,10 @@ public class VolumeExplosionDetector {
         for (Security security : securities) {
             SecurityPrice securityPrice = securityPriceRepository.findByOpenDateAndSecurityAndPeriod(openDate, security, period);
             if (securityPrice != null && securityPrice.getEstimatedTurnover().compareTo(TURNOVER_THRESHOLD) > 0) {
-                List<Integer> volumes = securityPriceRepository.findVolumesLastPeriods(openDate, security.getId(), period.toString(), 30);
+                List<Integer> volumes = securityPriceRepository.findVolumesLastPeriods(openDate, security.getId(), period.toString(), 5);
                 if (volumes != null && !volumes.isEmpty()) {
                     Integer averageVolume = (int)volumes.stream().mapToInt(a -> a).average().getAsDouble();
-                    Date startDate = org.apache.commons.lang3.time.DateUtils.addDays(openDate, -90);
+                    Date startDate = org.apache.commons.lang3.time.DateUtils.addDays(openDate, -120);
                     if (securityPrice.getVolume() > MIN_TIMES * averageVolume &&
                             securityPriceRepository.findVolumeLargerDays(startDate, openDate, security.getId(), securityPrice.getVolume(), period.toString()) == 0) {
                         logger.info(security.getCode());
