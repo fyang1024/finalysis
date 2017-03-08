@@ -1,6 +1,7 @@
 package com.finalysis.research.virtuality;
 
 import com.finalysis.research.reality.Exchange;
+import org.apache.commons.lang3.time.DateUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -35,6 +36,10 @@ public class TradingDateService {
                 || calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY) {
             calendar.add(Calendar.DAY_OF_YEAR, -1);
         }
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
         return calendar.getTime();
     }
     

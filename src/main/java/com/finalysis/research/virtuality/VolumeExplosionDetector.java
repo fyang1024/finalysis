@@ -21,8 +21,8 @@ import java.util.List;
 public class VolumeExplosionDetector {
 
     private static final Logger logger = LoggerFactory.getLogger(VolumeExplosionDetector.class);
-    private static final BigDecimal TURNOVER_THRESHOLD = new BigDecimal("5000000");
-    private static final Integer MIN_TIMES = 8;
+    private static final BigDecimal TURNOVER_THRESHOLD = new BigDecimal("250000");
+    private static final Integer MIN_TIMES = 5;
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");
     private static final BigDecimal STOP_LOSS_RATIO = new BigDecimal("0.9");
 
