@@ -77,6 +77,14 @@ public class AsxDataLoaderJob {
         asxUpcomingFloatDetailLoader.loadUpcomingFloatsDetails(exchange);
     }
 
+    @Scheduled(cron = "0 30 12,15 * * MON-FRI")
+    public void sendVolumeExplosionTips() {
+        Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
+        if (tradingDateService.isTodayTradingDay(exchange)) {
+            volumeExplosionDetector.sendVolumeExplosionTips(exchange, SecurityPricePeriod.Day, tradingDateService.getLatestTradingDate(exchange));
+        }
+    }
+
     @Scheduled(cron = "0 35 18 * * MON-FRI")
     public void loadData() {
         Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");

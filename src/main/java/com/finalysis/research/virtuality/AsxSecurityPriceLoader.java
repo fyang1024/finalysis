@@ -80,18 +80,19 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
                 lastBunch.add(security);
                 count++;
             } else {
-                loadLastBunch(exchange, lastBunch);
+                securityPriceRepository.save(loadLastBunch(exchange, lastBunch));
                 lastBunch.clear();
                 lastBunch.add(security);
                 count = 1;
             }
         }
         if (!lastBunch.isEmpty()) {
-            loadLastBunch(exchange, lastBunch);
+            securityPriceRepository.save(loadLastBunch(exchange, lastBunch));
         }
     }
 
-    private void loadLastBunch(Exchange exchange, List<Security> lastBunch) {
+    public List<SecurityPrice> loadLastBunch(Exchange exchange, List<Security> lastBunch) {
+        List<SecurityPrice> securityPriceList = new ArrayList<>();
         Map<String, Security> map = buildMap(lastBunch);
         Date date = tradingDateService.getLatestTradingDate(exchange);
         WebDriver driver = new HtmlUnitDriver(BrowserVersion.CHROME);
@@ -105,14 +106,15 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
                 WebElement row = rows.get(i);
                 String code = row.findElement(By.tagName("th")).getText().replace("*", "").trim();
                 logger.info("Load price - " + code);
-                if (securityPriceRepository.findByCodeAndExchangeAndOpenDate(code, exchange, date) == null) {
+                SecurityPrice securityPrice = securityPriceRepository.findByCodeAndExchangeAndOpenDate(code, exchange, date);
+                if (securityPrice == null) {
                     List<WebElement> cells = row.findElements(By.tagName("td"));
                     Security security = map.get(code);
                     if (security.getListingDate() != null && !security.getListingDate().after(date)
                             && hasText(cells)) {
                         Integer volume = new Integer(cells.get(8).getText().replaceAll(",", ""));
                         if(volume > 0) {
-                            SecurityPrice securityPrice = new SecurityPrice();
+                            securityPrice = new SecurityPrice();
                             securityPrice.setCode(code);
                             securityPrice.setExchange(exchange);
                             securityPrice.setOpenDate(date);
@@ -123,13 +125,16 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
                             securityPrice.setLowestPrice(new BigDecimal(cells.get(7).getText()));
                             securityPrice.setClosePrice(new BigDecimal(cells.get(0).getText()));
                             securityPrice.setVolume(volume);
-                            securityPriceRepository.saveAndFlush(securityPrice);
+                            securityPriceList.add(securityPrice);
                         }
                     }
+                } else {
+                    securityPriceList.add(securityPrice);
                 }
             }
         }
         driver.close();
+        return securityPriceList;
     }
 
     private boolean hasText(List<WebElement> cells) {

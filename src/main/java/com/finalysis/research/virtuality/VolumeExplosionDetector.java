@@ -14,15 +14,21 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class VolumeExplosionDetector {
 
     private static final Logger logger = LoggerFactory.getLogger(VolumeExplosionDetector.class);
-    private static final BigDecimal TURNOVER_THRESHOLD = new BigDecimal("250000");
+    private static final BigDecimal TURNOVER_THRESHOLD = new BigDecimal("200000");
     private static final Integer MIN_TIMES = 5;
+    private static final Integer MIN_TIMES_AT_NOON = 2;
+    private static final Integer MIN_TIMES_BEFORE_CLOSE = 4;
     private static final String LINE_SEPARATOR = System.getProperty("line.separator");
     private static final BigDecimal STOP_LOSS_RATIO = new BigDecimal("0.9");
 
@@ -36,14 +42,16 @@ public class VolumeExplosionDetector {
     AnnouncementRepository announcementRepository;
 
     @Autowired
+    AsxSecurityPriceLoader securityPriceLoader;
+
+    @Autowired
     JavaMailSender mailSender;
 
-    public void sendMail() {
+    private void sendEMail(String text) {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo("fyang1024@gmail.com");
         message.setFrom("fyang1024@gmail.com");
-        message.setSubject("Volume Explosion");
-        message.setText("Test");
+        message.setSubject(text);
         mailSender.send(message);
         logger.info("Email Sent");
     }
@@ -107,6 +115,71 @@ public class VolumeExplosionDetector {
             FileUtils.copyFile(file, new File("/Users/yangf/Google Drive/daily buy tips", fileName));
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
+        }
+    }
+
+    public void sendVolumeExplosionTips(Exchange exchange, SecurityPricePeriod day, Date openDate) {
+        ExecutorService executorService = Executors.newCachedThreadPool();
+        final int maxCodes = 10;
+        List<Security> securities = securityRepository.findActiveByExchange(exchange, new Date());
+        List<Security> lastBunch = new ArrayList<>(maxCodes);
+        int count = 0;
+        for (Security security : securities) {
+            if (count < maxCodes) {
+                lastBunch.add(security);
+                count++;
+            } else {
+                final List<SecurityPrice> prices = securityPriceLoader.loadLastBunch(exchange, lastBunch);
+                executorService.execute(new DetectAndSend(prices));
+                lastBunch.clear();
+                lastBunch.add(security);
+                count = 1;
+            }
+        }
+        if (!lastBunch.isEmpty()) {
+            final List<SecurityPrice> prices = securityPriceLoader.loadLastBunch(exchange, lastBunch);
+            executorService.execute(new DetectAndSend(prices));
+        }
+        executorService.shutdown();
+        try {
+            executorService.awaitTermination(1, TimeUnit.HOURS);
+        } catch (InterruptedException e) {
+            logger.error(e.getMessage(), e);
+        }
+    }
+
+    class DetectAndSend implements Runnable {
+
+        private List<SecurityPrice> prices;
+
+        DetectAndSend(List<SecurityPrice> prices) {
+            this.prices = prices;
+        }
+
+        @Override
+        public void run() {
+            StringBuilder sb = new StringBuilder();
+            Integer times = Calendar.getInstance().get(Calendar.HOUR_OF_DAY) == 12 ? MIN_TIMES_AT_NOON : MIN_TIMES_BEFORE_CLOSE;
+            for(SecurityPrice securityPrice : prices) {
+                if(securityPrice.getEstimatedTurnover().compareTo(TURNOVER_THRESHOLD) > 0) {
+                    Date openDate = securityPrice.getOpenDate();
+                    Security security = securityPrice.getSecurity();
+                    String securityPeriodName = securityPrice.getPeriod().toString();
+                    List<Integer> volumes = securityPriceRepository.findVolumesLastPeriods(openDate, security.getId(), securityPeriodName, 5);
+                    if (volumes != null && !volumes.isEmpty()) {
+                        Integer averageVolume = (int) volumes.stream().mapToInt(a -> a).average().getAsDouble();
+                        Date startDate = org.apache.commons.lang3.time.DateUtils.addDays(openDate, -120);
+                        if (securityPrice.getVolume() > times * averageVolume &&
+                                securityPriceRepository.findVolumeLargerDays(startDate, openDate, security.getId(), securityPrice.getVolume(), securityPeriodName) == 0) {
+                            logger.info(security.getCode());
+                            sb.append(security.getCode()).append(" ");
+                        }
+                    }
+                }
+            }
+            if(sb.length() > 0) {
+                sendEMail(sb.toString());
+            }
         }
     }
 }
