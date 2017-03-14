@@ -52,6 +52,7 @@ public class VolumeExplosionDetector {
         message.setTo("fyang1024@gmail.com");
         message.setFrom("fyang1024@gmail.com");
         message.setSubject(text);
+        message.setText("Found" + text);
         mailSender.send(message);
         logger.info("Email Sent");
     }
