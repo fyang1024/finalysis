@@ -59,6 +59,9 @@ public interface SecurityPriceRepository extends JpaRepository<SecurityPrice, In
     @Query(value = "select count(*) from Security_Price p where p.open_date <= ?1 and adddate(p.open_date, -90) > ?1 and p.security = ?2 and p.close_price >= ?3 and p.period = ?4", nativeQuery = true)
     Integer findPriceRank(Date openDate, Integer securityId, BigDecimal price,  String securityPeriodName);
 
+    @Query(value = "select close_price from Security_Price p where p.open_date < ?1 and p.security = ?2 and p.period = ?3 and p.close_price > 0 order by p.open_date desc limit 1", nativeQuery = true)
+    BigDecimal findPreviousPrice(Date openDate, Integer securityId, String periodName);
+
     @Query("select distinct code from SecurityPrice p where p.exchange = ?1 and p.security is null")
     List<String> findSecurityPriceCodesWithoutSecurity(Exchange exchange);
 

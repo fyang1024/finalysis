@@ -25,7 +25,8 @@ import java.util.concurrent.TimeUnit;
 public class VolumeExplosionDetector {
 
     private static final Logger logger = LoggerFactory.getLogger(VolumeExplosionDetector.class);
-    private static final BigDecimal TURNOVER_THRESHOLD = new BigDecimal("200000");
+    private static final BigDecimal TURNOVER_THRESHOLD = new BigDecimal("300000");
+    private static final BigDecimal PRICE_MOVE_THRESHOLD = new BigDecimal("0.20");
     private static final Integer MIN_TIMES = 5;
     private static final Integer MIN_TIMES_AT_NOON = 2;
     private static final Integer MIN_TIMES_BEFORE_CLOSE = 4;
@@ -75,8 +76,11 @@ public class VolumeExplosionDetector {
                 if (volumes != null && !volumes.isEmpty()) {
                     Integer averageVolume = (int)volumes.stream().mapToInt(a -> a).average().getAsDouble();
                     Date startDate = org.apache.commons.lang3.time.DateUtils.addDays(openDate, -120);
+                    BigDecimal previousPrice = securityPriceRepository.findPreviousPrice(securityPrice.getOpenDate(), security.getId(), period.toString());
                     if (securityPrice.getVolume() > MIN_TIMES * averageVolume &&
-                            securityPriceRepository.findVolumeLargerDays(startDate, openDate, security.getId(), securityPrice.getVolume(), period.toString()) == 0) {
+                            securityPriceRepository.findVolumeLargerDays(startDate, openDate, security.getId(), securityPrice.getVolume(), period.toString()) == 0 &&
+                            previousPrice.compareTo(BigDecimal.ZERO) > 0 &&
+                            securityPrice.getClosePrice().add(previousPrice.negate()).divide(previousPrice, 3, BigDecimal.ROUND_HALF_UP).compareTo(PRICE_MOVE_THRESHOLD) < 0) {
                         logger.info(security.getCode());
                         BigDecimal stopLoss = securityPrice.getClosePrice().multiply(STOP_LOSS_RATIO).setScale(3, BigDecimal.ROUND_HALF_DOWN);
                         Tip tip = new Tip(TipType.VOLUME_EXPLOSION, openDate, security, security.getCode(), securityPrice.getClosePrice(), stopLoss);
@@ -170,8 +174,11 @@ public class VolumeExplosionDetector {
                     if (volumes != null && !volumes.isEmpty()) {
                         Integer averageVolume = (int) volumes.stream().mapToInt(a -> a).average().getAsDouble();
                         Date startDate = org.apache.commons.lang3.time.DateUtils.addDays(openDate, -120);
+                        BigDecimal previousPrice = securityPriceRepository.findPreviousPrice(securityPrice.getOpenDate(), security.getId(), securityPrice.getPeriod().toString());
                         if (securityPrice.getVolume() > times * averageVolume &&
-                                securityPriceRepository.findVolumeLargerDays(startDate, openDate, security.getId(), securityPrice.getVolume(), securityPeriodName) == 0) {
+                                securityPriceRepository.findVolumeLargerDays(startDate, openDate, security.getId(), securityPrice.getVolume(), securityPeriodName) == 0 &&
+                                previousPrice.compareTo(BigDecimal.ZERO) > 0 &&
+                                securityPrice.getClosePrice().add(previousPrice.negate()).divide(previousPrice, 3, BigDecimal.ROUND_HALF_UP).compareTo(PRICE_MOVE_THRESHOLD) < 0) {
                             logger.info(security.getCode());
                             sb.append(security.getCode()).append(" ");
                         }
