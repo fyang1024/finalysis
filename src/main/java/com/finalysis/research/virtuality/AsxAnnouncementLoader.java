@@ -10,7 +10,12 @@ import org.apache.commons.io.IOUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
+import org.openqa.selenium.safari.SafariDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,24 +48,25 @@ class AsxAnnouncementLoader implements AnnouncementLoader {
         logger.info("Loading today's announcements");
         SecurityType ordinaryShare = securityTypeRepository.findByName("Ordinary Share");
         String url = exchange.getTodayAnnouncementUrl();
-        WebDriver driver = new HtmlUnitDriver(BrowserVersion.CHROME);
-        driver.get(url);
+        ChromeDriver driver = new ChromeDriver();
+        driver.get("http://www.asx.com.au/asx/statistics/prevBusDayAnns.do");
+        WebDriverWait wait = new WebDriverWait(driver, Integer.MAX_VALUE);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("table.announcements")));
         List<WebElement> tables = driver.findElements(By.cssSelector("table.announcements"));
         logger.info(tables.size() + " announcement table found");
         if (!tables.isEmpty()) {
-            Date announcementDate = Calendar.getInstance().getTime();//TODO should read from the header
+            Date announcementDate = DateUtils.parse("24/04/2017", DateUtils.AUSSIE_DATE_FORMAT);//TODO should read from the header
             WebElement table = tables.get(0);
             List<WebElement> rows = table.findElements(By.tagName("tr"));
             Map<String, Integer> counter = new HashMap<>();
             for (int j = rows.size() - 1; j > 0; j--) {
                 WebElement row = rows.get(j);
-                List<WebElement> codeCells = row.findElements(By.tagName("th"));
-                String code = codeCells.get(0).getText();
+                List<WebElement> cells = row.findElements(By.tagName("td"));
+                String code = cells.get(0).getText();
                 Security security = securityRepository.findByCodeAndExchange(code, exchange, announcementDate);
                 if(security != null) {
                     if (security.getSecurityType().getId().equals(ordinaryShare.getId())) {
-                        List<WebElement> cells = row.findElements(By.tagName("td"));
-                        String headline = cells.get(2).getText();
+                        String headline = cells.get(3).getText();
                         String key = code + " - " + headline;
                         logger.info(key);
                         if (counter.get(key) == null) {
@@ -70,10 +76,10 @@ class AsxAnnouncementLoader implements AnnouncementLoader {
                         }
                         List<Announcement> announcements = announcementRepository.findByExchangeAndSecurityAndAnnouncementDateAndHeadline(exchange, security, announcementDate, headline);
                         if (counter.get(key) > announcements.size()) {
-                            boolean priceSensitive = !cells.get(1).findElements(By.tagName("img")).isEmpty();
+                            boolean priceSensitive = !cells.get(2).findElements(By.tagName("img")).isEmpty();
                             Announcement announcement = new Announcement(exchange, security, code, announcementDate, priceSensitive, headline);
-                            if (cells.get(3).getText().matches("\\d+")) {
-                                announcement.setPages(Integer.parseInt(cells.get(3).getText()));
+                            if (cells.get(4).getText().matches("\\d+")) {
+                                announcement.setPages(Integer.parseInt(cells.get(4).getText()));
                             }
                             String filePath = generateFileName(headline);
 //                            List<WebElement> pdfLinks = cells.get(4).findElements(By.tagName("a"));
