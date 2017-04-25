@@ -41,6 +41,7 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
     @Autowired
     TradingDateService tradingDateService;
 
+    //TODO load from Yahoo! Finance API
     @Override
     public void loadSecurityPrice(Exchange exchange) {
         loadFromArchive(exchange);
