@@ -126,7 +126,7 @@ public class VolumeExplosionDetector {
     public void sendVolumeExplosionTips(Exchange exchange, SecurityPricePeriod day, Date openDate) {
         ExecutorService executorService = Executors.newCachedThreadPool();
         final int maxCodes = 10;
-        List<Security> securities = securityRepository.findActiveByExchange(exchange, new Date());
+        List<Security> securities = securityRepository.findActiveByExchange(exchange, openDate);
         List<Security> lastBunch = new ArrayList<>(maxCodes);
         int count = 0;
         for (Security security : securities) {
@@ -134,7 +134,7 @@ public class VolumeExplosionDetector {
                 lastBunch.add(security);
                 count++;
             } else {
-                final List<SecurityPrice> prices = securityPriceLoader.loadLastBunch(exchange, lastBunch);
+                final List<SecurityPrice> prices = securityPriceLoader.loadLastBunch(exchange, lastBunch, openDate);
                 executorService.execute(new DetectAndSend(prices));
                 lastBunch.clear();
                 lastBunch.add(security);
@@ -142,7 +142,7 @@ public class VolumeExplosionDetector {
             }
         }
         if (!lastBunch.isEmpty()) {
-            final List<SecurityPrice> prices = securityPriceLoader.loadLastBunch(exchange, lastBunch);
+            final List<SecurityPrice> prices = securityPriceLoader.loadLastBunch(exchange, lastBunch, openDate);
             executorService.execute(new DetectAndSend(prices));
         }
         executorService.shutdown();

@@ -72,7 +72,8 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
     }
 
     private void loadFromUrl(Exchange exchange) {
-        List<Security> securities = securityRepository.findActiveByExchange(exchange, new Date());
+        Date date = tradingDateService.getLatestTradingDate(exchange);
+        List<Security> securities = securityRepository.findActiveByExchange(exchange, date);
         List<Security> lastBunch = new ArrayList<>(maxCodes);
         int count = 0;
         for (Security security : securities) {
@@ -80,21 +81,20 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
                 lastBunch.add(security);
                 count++;
             } else {
-                securityPriceRepository.save(loadLastBunch(exchange, lastBunch));
+                securityPriceRepository.save(loadLastBunch(exchange, lastBunch, date));
                 lastBunch.clear();
                 lastBunch.add(security);
                 count = 1;
             }
         }
         if (!lastBunch.isEmpty()) {
-            securityPriceRepository.save(loadLastBunch(exchange, lastBunch));
+            securityPriceRepository.save(loadLastBunch(exchange, lastBunch, date));
         }
     }
 
-    public List<SecurityPrice> loadLastBunch(Exchange exchange, List<Security> lastBunch) {
+    List<SecurityPrice> loadLastBunch(Exchange exchange, List<Security> lastBunch, Date date) {
         List<SecurityPrice> securityPriceList = new ArrayList<>();
         Map<String, Security> map = buildMap(lastBunch);
-        Date date = tradingDateService.getLatestTradingDate(exchange);
         WebDriver driver = new HtmlUnitDriver(BrowserVersion.CHROME);
         String url = exchange.getSecurityPriceUrl().replace("${codes}", concatenateCodes(lastBunch));
         logger.info(url);
