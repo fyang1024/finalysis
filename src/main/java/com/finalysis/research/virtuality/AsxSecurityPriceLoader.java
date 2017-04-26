@@ -81,6 +81,7 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
         try {
             return loadLastBunchFromYahoo(exchange, lastBunch, date);
         } catch (Exception e1) {
+            logger.error(e1.getMessage(), e1);
             try {
                 return loadLastBunchFromExchange(exchange, lastBunch, date);
             } catch (Exception e2) {
