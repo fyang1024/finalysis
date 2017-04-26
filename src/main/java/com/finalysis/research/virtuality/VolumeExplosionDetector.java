@@ -58,7 +58,7 @@ public class VolumeExplosionDetector {
         logger.info("Email Sent");
     }
 
-    public void detectVolumeExplosion(Exchange exchange, SecurityPricePeriod period, Date openDate) {
+    void detectVolumeExplosion(Exchange exchange, SecurityPricePeriod period, Date openDate) {
         List<Tip> tips = getTips(exchange, period, openDate);
         if (!tips.isEmpty()) {
             writeToFile(exchange, tips, openDate);
@@ -66,7 +66,7 @@ public class VolumeExplosionDetector {
         logger.info("--Done--");
     }
 
-    public List<Tip> getTips(Exchange exchange, SecurityPricePeriod period, Date openDate) {
+    List<Tip> getTips(Exchange exchange, SecurityPricePeriod period, Date openDate) {
         List<Tip> tips = new ArrayList<>();
         List<Security> securities = securityRepository.findActiveByExchange(exchange, openDate, SecurityType.ORDINARY_SHARE);
         for (Security security : securities) {
@@ -107,7 +107,7 @@ public class VolumeExplosionDetector {
         return tips;
     }
 
-    public void writeToFile(Exchange exchange, List<Tip> tips, Date openDate) {
+    private void writeToFile(Exchange exchange, List<Tip> tips, Date openDate) {
         String dateStr = new SimpleDateFormat("yyyy-MMM-dd").format(openDate);
         StringBuilder sb = new StringBuilder();
         for (Tip tip : tips) {
@@ -123,7 +123,7 @@ public class VolumeExplosionDetector {
         }
     }
 
-    public void sendVolumeExplosionTips(Exchange exchange, SecurityPricePeriod day, Date openDate) {
+    void sendVolumeExplosionTips(Exchange exchange, SecurityPricePeriod day, Date openDate) {
         ExecutorService executorService = Executors.newCachedThreadPool();
         final int maxCodes = 10;
         List<Security> securities = securityRepository.findActiveByExchange(exchange, openDate);
@@ -134,7 +134,7 @@ public class VolumeExplosionDetector {
                 lastBunch.add(security);
                 count++;
             } else {
-                final List<SecurityPrice> prices = securityPriceLoader.loadLastBunch(exchange, lastBunch, openDate);
+                final List<SecurityPrice> prices = securityPriceLoader.loadLastBunchFromInternet(exchange, lastBunch, openDate);
                 executorService.execute(new DetectAndSend(prices));
                 lastBunch.clear();
                 lastBunch.add(security);
@@ -142,7 +142,7 @@ public class VolumeExplosionDetector {
             }
         }
         if (!lastBunch.isEmpty()) {
-            final List<SecurityPrice> prices = securityPriceLoader.loadLastBunch(exchange, lastBunch, openDate);
+            final List<SecurityPrice> prices = securityPriceLoader.loadLastBunchFromInternet(exchange, lastBunch, openDate);
             executorService.execute(new DetectAndSend(prices));
         }
         executorService.shutdown();

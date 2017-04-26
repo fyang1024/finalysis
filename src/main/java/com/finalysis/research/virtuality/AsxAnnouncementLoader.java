@@ -11,9 +11,7 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
-import org.openqa.selenium.safari.SafariDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
@@ -49,7 +47,7 @@ class AsxAnnouncementLoader implements AnnouncementLoader {
         SecurityType ordinaryShare = securityTypeRepository.findByName("Ordinary Share");
         String url = exchange.getTodayAnnouncementUrl();
         ChromeDriver driver = new ChromeDriver();
-        driver.get("http://www.asx.com.au/asx/statistics/prevBusDayAnns.do");
+        driver.get(url);
         WebDriverWait wait = new WebDriverWait(driver, Integer.MAX_VALUE);
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("table.announcements")));
         List<WebElement> tables = driver.findElements(By.cssSelector("table.announcements"));
@@ -157,11 +155,7 @@ class AsxAnnouncementLoader implements AnnouncementLoader {
                             Date announcementDate = DateUtils.parse(dateStr, DateUtils.AUSSIE_DATE_FORMAT);
                             String headline = cells.get(2).getText();
                             String key = dateStr + "-" + headline;
-                            if (counter.get(key) == null) {
-                                counter.put(key, 1);
-                            } else {
-                                counter.put(key, counter.get(key) + 1);
-                            }
+                            counter.merge(key, 1, (a, b) -> a + b);
                             List<Announcement> announcements = announcementRepository.findByExchangeAndSecurityAndAnnouncementDateAndHeadline(exchange, security, announcementDate, headline);
                             if (counter.get(key) > announcements.size()) {
                                 boolean priceSensitive = !cells.get(1).findElements(By.tagName("img")).isEmpty();

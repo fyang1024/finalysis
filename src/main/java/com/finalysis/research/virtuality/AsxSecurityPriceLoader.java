@@ -9,17 +9,23 @@ import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
+import yahoofinance.Stock;
+import yahoofinance.YahooFinance;
+import yahoofinance.quotes.stock.StockQuote;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Component
 public class AsxSecurityPriceLoader implements SecurityPriceLoader {
@@ -45,21 +51,90 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
     @Override
     public void loadSecurityPrice(Exchange exchange) {
         loadFromArchive(exchange);
-        loadFromUrl(exchange);
+        loadFromInternet(exchange);
         logger.info("--Done--");
+    }
+
+    private void loadFromInternet(Exchange exchange) {
+        Date date = tradingDateService.getLatestTradingDate(exchange);
+        List<Security> securities = securityRepository.findActiveByExchange(exchange, date);
+        List<Security> lastBunch = new ArrayList<>(maxCodes);
+        int count = 0;
+        for (Security security : securities) {
+            if (count < maxCodes) {
+                lastBunch.add(security);
+                count++;
+            } else {
+                securityPriceRepository.save(loadLastBunchFromInternet(exchange, lastBunch, date));
+                lastBunch.clear();
+                lastBunch.add(security);
+                count = 1;
+            }
+        }
+        if (!lastBunch.isEmpty()) {
+            securityPriceRepository.save(loadLastBunchFromInternet(exchange, lastBunch, date));
+        }
+    }
+
+    List<SecurityPrice> loadLastBunchFromInternet(Exchange exchange, List<Security> lastBunch, Date date) {
+        try {
+            return loadLastBunchFromYahoo(exchange, lastBunch, date);
+        } catch (Exception e1) {
+            try {
+                return loadLastBunchFromExchange(exchange, lastBunch, date);
+            } catch (Exception e2) {
+                logger.error(e2.getMessage(), e2);
+                return new ArrayList<>();
+            }
+        }
+    }
+
+    private List<SecurityPrice> loadLastBunchFromYahoo(Exchange exchange, List<Security> lastBunch, Date date) throws IOException {
+        List<SecurityPrice> securityPriceList = new ArrayList<>();
+        Map<String, Security> map = buildMap(lastBunch);
+        String[] codes = lastBunch.stream().map(s -> s.getCode() + ".AX").collect(Collectors.toSet()).toArray(new String[lastBunch.size()]);
+        Map<String, Stock> stocks = YahooFinance.get(codes);
+        for (Stock stock : stocks.values()) {
+            String code = stock.getSymbol().replace(".AX", "");
+            logger.info("Load price - " + code);
+            SecurityPrice securityPrice = securityPriceRepository.findByCodeAndExchangeAndOpenDate(code, exchange, date);
+            if (securityPrice == null) {
+                Security security = map.get(code);
+                StockQuote quote = stock.getQuote(true);
+                if (security.getListingDate() != null && !security.getListingDate().after(date)
+                        && !quote.getLastTradeTime(TimeZone.getTimeZone(exchange.getTimeZone())).before(date)
+                        && quote.getVolume() > 0) {
+                    securityPrice = new SecurityPrice();
+                    securityPrice.setCode(code);
+                    securityPrice.setExchange(exchange);
+                    securityPrice.setOpenDate(date);
+                    securityPrice.setCloseDate(date);
+                    securityPrice.setSecurity(security);
+                    securityPrice.setOpenPrice(quote.getOpen());
+                    securityPrice.setHighestPrice(quote.getDayHigh());
+                    securityPrice.setLowestPrice(quote.getDayLow());
+                    securityPrice.setClosePrice(quote.getPrice());
+                    securityPrice.setVolume(quote.getVolume().intValue());
+                    securityPriceList.add(securityPrice);
+                }
+            } else {
+                securityPriceList.add(securityPrice);
+            }
+        }
+        return securityPriceList;
     }
 
     public void setSecurity(Exchange exchange) {
         List<String> codes = securityPriceRepository.findSecurityPriceCodesWithoutSecurity(exchange);
-        for(String code : codes) {
+        for (String code : codes) {
             logger.info(code);
             List<SecurityPrice> prices = securityPriceRepository.findByCodeAndExchangeAndSecurityIsNull(code, exchange);
-            for(SecurityPrice price : prices) {
-                if(price.getSecurity() != null) {
+            for (SecurityPrice price : prices) {
+                if (price.getSecurity() != null) {
                     logger.error("Security exists");
                 } else {
                     Security security = securityFinder.findSecurity(exchange, price.getCode(), price.getOpenDate());
-                    if(security != null) {
+                    if (security != null) {
                         logger.info("Found security " + security.getId() + " - current code: " + security.getCode());
                         price.setSecurity(security);
                         securityPriceRepository.save(price);
@@ -72,34 +147,15 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
 
     }
 
-    private void loadFromUrl(Exchange exchange) {
-        Date date = tradingDateService.getLatestTradingDate(exchange);
-        List<Security> securities = securityRepository.findActiveByExchange(exchange, date);
-        List<Security> lastBunch = new ArrayList<>(maxCodes);
-        int count = 0;
-        for (Security security : securities) {
-            if (count < maxCodes) {
-                lastBunch.add(security);
-                count++;
-            } else {
-                securityPriceRepository.save(loadLastBunch(exchange, lastBunch, date));
-                lastBunch.clear();
-                lastBunch.add(security);
-                count = 1;
-            }
-        }
-        if (!lastBunch.isEmpty()) {
-            securityPriceRepository.save(loadLastBunch(exchange, lastBunch, date));
-        }
-    }
-
-    List<SecurityPrice> loadLastBunch(Exchange exchange, List<Security> lastBunch, Date date) {
+    private List<SecurityPrice> loadLastBunchFromExchange(Exchange exchange, List<Security> lastBunch, Date date) {
         List<SecurityPrice> securityPriceList = new ArrayList<>();
         Map<String, Security> map = buildMap(lastBunch);
         WebDriver driver = new HtmlUnitDriver(BrowserVersion.CHROME);
         String url = exchange.getSecurityPriceUrl().replace("${codes}", concatenateCodes(lastBunch));
         logger.info(url);
         driver.get(url);
+        WebDriverWait wait = new WebDriverWait(driver, Integer.MAX_VALUE);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("table.datatable")));
         List<WebElement> priceTables = driver.findElements(By.cssSelector("table.datatable"));
         if (!priceTables.isEmpty()) {
             List<WebElement> rows = priceTables.get(0).findElements(By.tagName("tr"));
@@ -114,7 +170,7 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
                     if (security.getListingDate() != null && !security.getListingDate().after(date)
                             && hasText(cells)) {
                         Integer volume = new Integer(cells.get(8).getText().replaceAll(",", ""));
-                        if(volume > 0) {
+                        if (volume > 0) {
                             securityPrice = new SecurityPrice();
                             securityPrice.setCode(code);
                             securityPrice.setExchange(exchange);
@@ -176,7 +232,7 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
             String datePart = name.substring(0, name.indexOf("."));
             return !DateUtils.parse(datePart, "yyyyMMdd").before(fromDate);
         });
-        Arrays.parallelSort(files, (o1, o2) -> o1.getName().compareTo(o2.getName()));
+        Arrays.parallelSort(files, Comparator.comparing(File::getName));
         for (File file : files) {
             logger.info(file.getName());
             String datePart = file.getName().substring(0, file.getName().indexOf("."));
@@ -189,7 +245,7 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
                     String code = line[0];
                     if (securityPriceRepository.findByCodeAndExchangeAndOpenDate(code, exchange, tradingDate) == null) {
                         Security security = securityFinder.findSecurity(exchange, code, tradingDate);
-                        if(security == null) {
+                        if (security == null) {
                             logger.warn("Could not find security " + code + ", skipped");
                         } else {
                             SecurityPrice securityPrice = new SecurityPrice();
