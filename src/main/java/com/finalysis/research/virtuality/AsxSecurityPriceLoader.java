@@ -3,13 +3,10 @@ package com.finalysis.research.virtuality;
 import au.com.bytecode.opencsv.CSVReader;
 import com.finalysis.research.DateUtils;
 import com.finalysis.research.reality.Exchange;
-import com.gargoylesoftware.htmlunit.BrowserVersion;
 import org.apache.commons.io.IOUtils;
 import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
@@ -102,10 +99,10 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
             SecurityPrice securityPrice = securityPriceRepository.findByCodeAndExchangeAndOpenDate(code, exchange, date);
             if (securityPrice == null) {
                 Security security = map.get(code);
-                StockQuote quote = stock.getQuote(true);
+                StockQuote quote = stock.getQuote();
                 if (security.getListingDate() != null && !security.getListingDate().after(date)
-                        && !quote.getLastTradeTime(TimeZone.getTimeZone(exchange.getTimeZone())).before(date)
-                        && quote.getVolume() > 0) {
+                        && quote != null && quote.getVolume() > 0
+                        && quote.getLastTradeTime() != null && !quote.getLastTradeTime().getTime().before(date)) {
                     securityPrice = new SecurityPrice();
                     securityPrice.setCode(code);
                     securityPrice.setExchange(exchange);
