@@ -8,6 +8,7 @@ import org.apache.commons.io.IOUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -150,7 +151,7 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
     private List<SecurityPrice> loadLastBunchFromExchange(Exchange exchange, List<Security> lastBunch, Date date) {
         List<SecurityPrice> securityPriceList = new ArrayList<>();
         Map<String, Security> map = buildMap(lastBunch);
-        WebDriver driver = new HtmlUnitDriver(BrowserVersion.CHROME);
+        ChromeDriver driver = new ChromeDriver();
         String url = exchange.getSecurityPriceUrl().replace("${codes}", concatenateCodes(lastBunch));
         logger.info(url);
         driver.get(url);
