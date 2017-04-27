@@ -56,11 +56,7 @@ public class ManagementPosition extends BaseMortalEntity {
 
         ManagementPosition that = (ManagementPosition) o;
 
-        if (!company.equals(that.company)) return false;
-        if (!managementRole.equals(that.managementRole)) return false;
-        if (!person.equals(that.person)) return false;
-
-        return true;
+        return company.equals(that.company) && managementRole.equals(that.managementRole) && person.equals(that.person);
     }
 
     @Override
