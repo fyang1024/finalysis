@@ -6,5 +6,5 @@ import com.finalysis.research.reality.Exchange;
  * Created by Fei on 28/12/2015.
  */
 public interface UpcomingFloatDetailLoader {
-    void loadUpcomingFloatsDetails(Exchange exchange);
+    void deleteWithdrawnFloats(Exchange exchange);
 }

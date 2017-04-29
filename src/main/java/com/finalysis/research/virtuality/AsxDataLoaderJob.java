@@ -73,7 +73,7 @@ public class AsxDataLoaderJob {
             securityPriceLoader.loadSecurityPrice(exchange);
             volumeExplosionDetector.detectVolumeExplosion(exchange, SecurityPricePeriod.Day, tradingDateService.getLatestTradingDate(exchange));
         }
-        asxUpcomingFloatDetailLoader.loadUpcomingFloatsDetails(exchange);
+        asxUpcomingFloatDetailLoader.deleteWithdrawnFloats(exchange);
     }
 
     @Scheduled(cron = "0 30 12,15 * * MON-FRI")
@@ -103,7 +103,7 @@ public class AsxDataLoaderJob {
 //            momentumChaser.detectBreakout(exchange, SecurityPricePeriod.Day, tradingDateService.getLatestTradingDate(exchange));
             volumeExplosionDetector.detectVolumeExplosion(exchange, SecurityPricePeriod.Day, tradingDateService.getLatestTradingDate(exchange));
         }
-        asxUpcomingFloatDetailLoader.loadUpcomingFloatsDetails(exchange);
+        asxUpcomingFloatDetailLoader.deleteWithdrawnFloats(exchange);
     }
 
     @Scheduled(cron = "0 0 0 1 JAN *")

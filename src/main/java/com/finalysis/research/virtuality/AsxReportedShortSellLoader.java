@@ -39,16 +39,13 @@ public class AsxReportedShortSellLoader implements ReportedShortSellLoader {
     }
 
     private void loadFromUrl(Exchange exchange) {
-        WebClient webClient = new WebClient(BrowserVersion.CHROME);
-        try {
+        try (WebClient webClient = new WebClient(BrowserVersion.CHROME)) {
             InputStreamReader inputStreamReader = new InputStreamReader(webClient.getPage(exchange.getShortSellUrl()).getWebResponse().getContentAsStream());
             BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
             loadOneDay(exchange, datePattern, bufferedReader);
             bufferedReader.close();
         } catch (Exception e) {
             logger.error(e.getMessage(), e);
-        } finally {
-            webClient.close();
         }
     }
 
