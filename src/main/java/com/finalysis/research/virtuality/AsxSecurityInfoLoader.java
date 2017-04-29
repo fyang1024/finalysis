@@ -94,8 +94,9 @@ public class AsxSecurityInfoLoader implements SecurityInfoLoader {
         List<Security> securities = securityRepository.findSecuritiesToUpdateInfo(exchange, tradingDate);
         for (Security security : securities) {
             WebDriver driver = new ChromeDriver();
-            logger.info(security.getCode() + " -- loading info...");
-            driver.get(url.replace("${code}", security.getCode()));
+            String realUrl = url.replace("${code}", security.getCode());
+            logger.info(realUrl);
+            driver.get(realUrl);
             List<WebElement> infoTables = driver.findElements(By.className("company-details"));
             if (infoTables.isEmpty()) {
                 logger.error("Could not find company details table");
