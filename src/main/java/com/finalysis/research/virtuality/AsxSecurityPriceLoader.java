@@ -101,7 +101,7 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
                 Security security = map.get(code);
                 StockQuote quote = stock.getQuote();
                 if (security.getListingDate() != null && !security.getListingDate().after(date)
-                        && quote != null && quote.getVolume() > 0
+                        && quote != null && quote.getVolume() != null && quote.getVolume() > 0
                         && quote.getLastTradeTime() != null && !quote.getLastTradeTime().getTime().before(date)) {
                     securityPrice = new SecurityPrice();
                     securityPrice.setCode(code);

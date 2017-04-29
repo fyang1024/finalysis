@@ -48,6 +48,7 @@ public class AsxSecurityInfoLoader implements SecurityInfoLoader {
 
     public void loadListingDate(Exchange exchange) {
         WebDriver driver = new HtmlUnitDriver(BrowserVersion.CHROME);
+        logger.info(exchange.getRecentFloatsUrl());
         driver.get(exchange.getRecentFloatsUrl());
         List<WebElement> tables = driver.findElements(By.cssSelector("table.floats"));
         if (tables.isEmpty()) {
@@ -91,7 +92,6 @@ public class AsxSecurityInfoLoader implements SecurityInfoLoader {
         String url = exchange.getSecurityInfoUrl();
         Date tradingDate = tradingDateService.getLatestTradingDate(exchange);
         List<Security> securities = securityRepository.findSecuritiesToUpdateInfo(exchange, tradingDate);
-//        System.setProperty("webdriver.chrome.driver", "D:\\web drivers\\chromedriver.exe");
         for (Security security : securities) {
             WebDriver driver = new ChromeDriver();
             logger.info(security.getCode() + " -- loading info...");

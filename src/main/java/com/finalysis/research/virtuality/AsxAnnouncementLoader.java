@@ -8,6 +8,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -62,7 +63,7 @@ class AsxAnnouncementLoader implements AnnouncementLoader {
                 List<WebElement> codeCells = row.findElements(By.tagName("th"));
                 String code = codeCells.get(0).getText();
                 Security security = securityRepository.findByCodeAndExchange(code, exchange, announcementDate);
-                if(security != null) {
+                if (security != null) {
                     if (security.getSecurityType().getId().equals(ordinaryShare.getId())) {
                         List<WebElement> cells = row.findElements(By.tagName("td"));
                         String headline = cells.get(2).getText();
@@ -118,7 +119,7 @@ class AsxAnnouncementLoader implements AnnouncementLoader {
         SecurityType ordinaryShare = securityTypeRepository.findByName("Ordinary Share");
         List<Security> securities = securityRepository.findByExchangeAndSecurityType(exchange, ordinaryShare);
         for (Security security : securities) {
-            if (security.getCode().length() <= 4) {
+            if (security.getCode().length() <= 4 && (security.getDelistedDate() == null || security.getDelistedYear().equals(getCurrentYear()))) {
                 Integer startYear = 1998;
                 if (security.getListingDate() != null) {
                     Calendar listingDateCal = Calendar.getInstance();
@@ -139,32 +140,35 @@ class AsxAnnouncementLoader implements AnnouncementLoader {
                 for (int year = startYear; year <= endYear; year++) {
                     String actualUrl = url.replace("${year}", "" + year).replace("${code}", security.getCode().substring(0, 3));
                     logger.info("Loading announcements for " + security.getCode() + " - " + year + " " + actualUrl);
-                    WebDriver driver = new HtmlUnitDriver(BrowserVersion.CHROME);
+                    WebDriver driver = new ChromeDriver();
                     driver.get(actualUrl);
-                    List<WebElement> tables = driver.findElements(By.cssSelector("table.contenttable"));
-                    logger.info(tables.size() + " announcement table found");
-                    List<String> codes = findCodes(driver);
-                    for (int i = tables.size() - 1; i >= 0; i--) {
-                        WebElement table = tables.get(i);
-                        String code = security.getCode().length() == 4 ? security.getCode() : codes.get(i);
-                        List<WebElement> rows = table.findElements(By.tagName("tr"));
-                        Map<String, Integer> counter = new HashMap<>();
-                        for (int j = rows.size() - 1; j > 0; j--) {
-                            WebElement row = rows.get(j);
-                            List<WebElement> cells = row.findElements(By.tagName("td"));
-                            String dateStr = cells.get(0).getText();
-                            Date announcementDate = DateUtils.parse(dateStr, DateUtils.AUSSIE_DATE_FORMAT);
-                            String headline = cells.get(2).getText();
-                            String key = dateStr + "-" + headline;
-                            counter.merge(key, 1, (a, b) -> a + b);
-                            List<Announcement> announcements = announcementRepository.findByExchangeAndSecurityAndAnnouncementDateAndHeadline(exchange, security, announcementDate, headline);
-                            if (counter.get(key) > announcements.size()) {
-                                boolean priceSensitive = !cells.get(1).findElements(By.tagName("img")).isEmpty();
-                                Announcement announcement = new Announcement(exchange, security, code, announcementDate, priceSensitive, headline);
-                                if (cells.get(3).getText().matches("\\d+")) {
-                                    announcement.setPages(Integer.parseInt(cells.get(3).getText()));
-                                }
-                                String filePath = generateFileName(headline);
+                    try {
+                        WebDriverWait wait = new WebDriverWait(driver, 30);
+                        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("table.contenttable")));
+                        List<WebElement> tables = driver.findElements(By.cssSelector("table.contenttable"));
+                        logger.info(tables.size() + " announcement table found");
+                        List<String> codes = findCodes(driver);
+                        for (int i = tables.size() - 1; i >= 0; i--) {
+                            WebElement table = tables.get(i);
+                            String code = security.getCode().length() == 4 ? security.getCode() : codes.get(i);
+                            List<WebElement> rows = table.findElements(By.tagName("tr"));
+                            Map<String, Integer> counter = new HashMap<>();
+                            for (int j = rows.size() - 1; j > 0; j--) {
+                                WebElement row = rows.get(j);
+                                List<WebElement> cells = row.findElements(By.tagName("td"));
+                                String dateStr = cells.get(0).getText();
+                                Date announcementDate = DateUtils.parse(dateStr, DateUtils.AUSSIE_DATE_FORMAT);
+                                String headline = cells.get(2).getText();
+                                String key = dateStr + "-" + headline;
+                                counter.merge(key, 1, (a, b) -> a + b);
+                                List<Announcement> announcements = announcementRepository.findByExchangeAndSecurityAndAnnouncementDateAndHeadline(exchange, security, announcementDate, headline);
+                                if (counter.get(key) > announcements.size()) {
+                                    boolean priceSensitive = !cells.get(1).findElements(By.tagName("img")).isEmpty();
+                                    Announcement announcement = new Announcement(exchange, security, code, announcementDate, priceSensitive, headline);
+                                    if (cells.get(3).getText().matches("\\d+")) {
+                                        announcement.setPages(Integer.parseInt(cells.get(3).getText()));
+                                    }
+                                    String filePath = generateFileName(headline);
 //                                List<WebElement> pdfLinks = cells.get(4).findElements(By.tagName("a"));
 //                                if (!pdfLinks.isEmpty()) {
 //                                    String pdfUrl = pdfLinks.get(0).getAttribute("href");
@@ -185,17 +189,21 @@ class AsxAnnouncementLoader implements AnnouncementLoader {
 //                                        }
 //                                    }
 //                                }
-                                if (StringUtils.hasText(filePath)) {
-                                    if (filePath.length() > 4000) {
-                                        filePath = filePath.substring(0, 4000);
+                                    if (StringUtils.hasText(filePath)) {
+                                        if (filePath.length() > 4000) {
+                                            filePath = filePath.substring(0, 4000);
+                                        }
+                                        announcement.setFileNames(filePath);
+                                    } else {
+                                        announcement.setFileNames(null);
                                     }
-                                    announcement.setFileNames(filePath);
-                                } else {
-                                    announcement.setFileNames(null);
+                                    announcementRepository.saveAndFlush(announcement);
                                 }
-                                announcementRepository.saveAndFlush(announcement);
                             }
+
                         }
+                    } catch (TimeoutException e) {
+                        logger.info("Time out...Probably no announcement table found");
                     }
                     driver.close();
                 }

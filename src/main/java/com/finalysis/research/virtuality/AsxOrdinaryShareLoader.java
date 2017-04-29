@@ -36,15 +36,14 @@ public class AsxOrdinaryShareLoader implements OrdinaryShareLoader {
     private SecurityRepository securityRepository;
 
     public void loadOrdinaryShares(Exchange exchange) {
-        WebClient webClient = new WebClient(BrowserVersion.CHROME);
-        try {
+        try (WebClient webClient = new WebClient(BrowserVersion.CHROME)) {
             SecurityType ordinaryShareType = securityTypeRepository.findByName("Ordinary Share");
             InputStreamReader inputStreamReader = new InputStreamReader(webClient.getPage(exchange.getListedOrdinaryShareUrl()).getWebResponse().getContentAsStream());
             CSVReader csvReader = new CSVReader(inputStreamReader, CSVParser.DEFAULT_SEPARATOR, CSVParser.DEFAULT_QUOTE_CHARACTER, 3);
             String[] line;
             while ((line = csvReader.readNext()) != null) {
                 String description = line[0].toUpperCase();
-                if(description.contains("TRUST") && description.contains("SERIES")
+                if (description.contains("TRUST") && description.contains("SERIES")
                         || description.contains("MASTERFUND") || description.contains("PUMA SERIES")) {
                     logger.info("Skipped " + line[0] + " | " + line[1] + " | " + line[2]);
                     continue;
@@ -87,8 +86,6 @@ public class AsxOrdinaryShareLoader implements OrdinaryShareLoader {
             csvReader.close();
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
-        } finally {
-            webClient.close();
         }
         logger.info("--Done--");
     }
