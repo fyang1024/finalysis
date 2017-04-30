@@ -94,7 +94,7 @@ public class AsxSecurityCodeChangeLoader implements SecurityCodeChangeLoader {
         List<SecurityCodeChange> codeChanges = securityCodeChangeRepository.findCodeChangesOn(exchange, date);
         for (SecurityCodeChange codeChange : codeChanges) {
             Security security = codeChange.getSecurity();
-            if (!security.getCode().equals(codeChange.getNewCode())) {
+            if (security.getCode().equals(codeChange.getNewCode())) {
                 logger.warn(security.getCode() + " code changed before change date");
             } else {
                 security.setCode(codeChange.getNewCode());
