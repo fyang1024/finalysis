@@ -84,6 +84,12 @@ public class AsxDataLoaderJob {
         }
     }
 
+    @Scheduled(cron = "0 0 0 * * MON-FRI")
+    public void processCodeChanges() {
+        Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
+        securityCodeChangeLoader.processCodeChangesOfToday(exchange);
+    }
+
     @Scheduled(cron = "0 35 18 * * MON-FRI")
     public void loadData() {
         Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
@@ -128,7 +134,7 @@ public class AsxDataLoaderJob {
         }
     }
 
-    @Scheduled(cron = "0 0 18 * * SUN")
+    @Scheduled(cron = "0 0 0 * * SUN")
     public void loadSecurityInfo() {
         Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
         securityInfoLoader.loadInfo(exchange);

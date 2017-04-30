@@ -92,8 +92,8 @@ public class AsxSecurityInfoLoader implements SecurityInfoLoader {
         String url = exchange.getSecurityInfoUrl();
         Date tradingDate = tradingDateService.getLatestTradingDate(exchange);
         List<Security> securities = securityRepository.findSecuritiesToUpdateInfo(exchange, tradingDate);
+        WebDriver driver = new ChromeDriver();
         for (Security security : securities) {
-            WebDriver driver = new ChromeDriver();
             String realUrl = url.replace("${code}", security.getCode());
             logger.info(realUrl);
             driver.get(realUrl);
@@ -161,8 +161,8 @@ public class AsxSecurityInfoLoader implements SecurityInfoLoader {
                     logger.info("Code may be invalid and page got redirected");
                 }
             }
-            driver.close();
         }
+        driver.close();
         logger.info("--Done--");
     }
 

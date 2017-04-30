@@ -58,7 +58,7 @@ public class AsxOrdinaryShareLoader implements OrdinaryShareLoader {
                 }
                 GicsIndustryGroup gicsIndustryGroup = gicsIndustryGroupRepository.findByName(line[2]);
                 if (security == null) {
-                    logger.info("Could not find it and creating it...");
+                    logger.warn("Could not find it and creating - " + line[1]);
                     Company company = new Company(line[0], gicsIndustryGroup);
                     company = companyRepository.saveAndFlush(company);
                     security = new Security(line[1], company, exchange);

@@ -27,4 +27,7 @@ public interface SecurityCodeChangeRepository extends JpaRepository<SecurityCode
     List<Security> findPossibleSecurities(String code, Exchange exchange, Date tradingDate);
 
     List<SecurityCodeChange> findBySecurityOrderByChangeDateAsc(Security security);
+
+    @Query("select c from SecurityCodeChange c where c.security IS NOT NULL and c.exchange = ?1 and c.changeDate = ?2")
+    List<SecurityCodeChange> findCodeChangesOn(Exchange exchange, Date date);
 }
