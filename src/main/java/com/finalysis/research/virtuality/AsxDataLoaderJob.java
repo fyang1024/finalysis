@@ -69,12 +69,11 @@ public class AsxDataLoaderJob {
     public void loadTodayAnnouncements() {
         Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
         announcementLoader.loadTodayAnnouncements(exchange);
-//        securityInfoLoader.loadInfo(exchange);
         if (tradingDateService.isTodayTradingDay(exchange)) {
             securityPriceLoader.loadSecurityPrice(exchange);
             volumeExplosionDetector.detectVolumeExplosion(exchange, SecurityPricePeriod.Day, tradingDateService.getLatestTradingDate(exchange));
         }
-        asxUpcomingFloatDetailLoader.loadUpcomingFloatsDetails(exchange);
+        asxUpcomingFloatDetailLoader.deleteWithdrawnFloats(exchange);
     }
 
     @Scheduled(cron = "0 30 12,15 * * MON-FRI")
@@ -83,6 +82,12 @@ public class AsxDataLoaderJob {
         if (tradingDateService.isTodayTradingDay(exchange)) {
             volumeExplosionDetector.sendVolumeExplosionTips(exchange, SecurityPricePeriod.Day, tradingDateService.getLatestTradingDate(exchange));
         }
+    }
+
+    @Scheduled(cron = "0 0 0 * * MON-FRI")
+    public void processCodeChanges() {
+        Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
+        securityCodeChangeLoader.processCodeChangesOfToday(exchange);
     }
 
     @Scheduled(cron = "0 35 18 * * MON-FRI")
@@ -98,14 +103,13 @@ public class AsxDataLoaderJob {
         delistedSecurityLoader.loadDelistedSecurity(exchange);
         reportedShortSellLoader.loadReportedShortSell(exchange);
         securityInfoLoader.loadListingDate(exchange);
-//        securityInfoLoader.loadInfo(exchange);
         if (tradingDateService.isTodayTradingDay(exchange)) {
             securityPriceLoader.loadSecurityPrice(exchange);
 //            swingPointMarker.markSwingPoints(exchange);
 //            momentumChaser.detectBreakout(exchange, SecurityPricePeriod.Day, tradingDateService.getLatestTradingDate(exchange));
             volumeExplosionDetector.detectVolumeExplosion(exchange, SecurityPricePeriod.Day, tradingDateService.getLatestTradingDate(exchange));
         }
-        asxUpcomingFloatDetailLoader.loadUpcomingFloatsDetails(exchange);
+        asxUpcomingFloatDetailLoader.deleteWithdrawnFloats(exchange);
     }
 
     @Scheduled(cron = "0 0 0 1 JAN *")
@@ -120,7 +124,7 @@ public class AsxDataLoaderJob {
         exchangeRepository.findByName("Australian Securities Exchange");
     }
 
-    @Scheduled(cron = "0 0 12 * * SAT,SUN")
+    @Scheduled(cron = "0 0 12 * * SAT")
     public void loadAnnouncements() {
         try {
             Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
@@ -128,5 +132,11 @@ public class AsxDataLoaderJob {
         } catch (Throwable t) {
             t.printStackTrace();
         }
+    }
+
+    @Scheduled(cron = "0 0 0 * * SUN")
+    public void loadSecurityInfo() {
+        Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
+        securityInfoLoader.loadInfo(exchange);
     }
 }

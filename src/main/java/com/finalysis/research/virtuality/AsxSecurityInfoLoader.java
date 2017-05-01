@@ -48,6 +48,7 @@ public class AsxSecurityInfoLoader implements SecurityInfoLoader {
 
     public void loadListingDate(Exchange exchange) {
         WebDriver driver = new HtmlUnitDriver(BrowserVersion.CHROME);
+        logger.info(exchange.getRecentFloatsUrl());
         driver.get(exchange.getRecentFloatsUrl());
         List<WebElement> tables = driver.findElements(By.cssSelector("table.floats"));
         if (tables.isEmpty()) {
@@ -91,11 +92,11 @@ public class AsxSecurityInfoLoader implements SecurityInfoLoader {
         String url = exchange.getSecurityInfoUrl();
         Date tradingDate = tradingDateService.getLatestTradingDate(exchange);
         List<Security> securities = securityRepository.findSecuritiesToUpdateInfo(exchange, tradingDate);
-//        System.setProperty("webdriver.chrome.driver", "D:\\web drivers\\chromedriver.exe");
+        WebDriver driver = new ChromeDriver();
         for (Security security : securities) {
-            WebDriver driver = new ChromeDriver();
-            logger.info(security.getCode() + " -- loading info...");
-            driver.get(url.replace("${code}", security.getCode()));
+            String realUrl = url.replace("${code}", security.getCode());
+            logger.info(realUrl);
+            driver.get(realUrl);
             List<WebElement> infoTables = driver.findElements(By.className("company-details"));
             if (infoTables.isEmpty()) {
                 logger.error("Could not find company details table");
@@ -160,8 +161,8 @@ public class AsxSecurityInfoLoader implements SecurityInfoLoader {
                     logger.info("Code may be invalid and page got redirected");
                 }
             }
-            driver.close();
         }
+        driver.close();
         logger.info("--Done--");
     }
 

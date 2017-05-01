@@ -36,15 +36,14 @@ public class AsxOrdinaryShareLoader implements OrdinaryShareLoader {
     private SecurityRepository securityRepository;
 
     public void loadOrdinaryShares(Exchange exchange) {
-        WebClient webClient = new WebClient(BrowserVersion.CHROME);
-        try {
+        try (WebClient webClient = new WebClient(BrowserVersion.CHROME)) {
             SecurityType ordinaryShareType = securityTypeRepository.findByName("Ordinary Share");
             InputStreamReader inputStreamReader = new InputStreamReader(webClient.getPage(exchange.getListedOrdinaryShareUrl()).getWebResponse().getContentAsStream());
             CSVReader csvReader = new CSVReader(inputStreamReader, CSVParser.DEFAULT_SEPARATOR, CSVParser.DEFAULT_QUOTE_CHARACTER, 3);
             String[] line;
             while ((line = csvReader.readNext()) != null) {
                 String description = line[0].toUpperCase();
-                if(description.contains("TRUST") && description.contains("SERIES")
+                if (description.contains("TRUST") && description.contains("SERIES")
                         || description.contains("MASTERFUND") || description.contains("PUMA SERIES")) {
                     logger.info("Skipped " + line[0] + " | " + line[1] + " | " + line[2]);
                     continue;
@@ -59,7 +58,7 @@ public class AsxOrdinaryShareLoader implements OrdinaryShareLoader {
                 }
                 GicsIndustryGroup gicsIndustryGroup = gicsIndustryGroupRepository.findByName(line[2]);
                 if (security == null) {
-                    logger.info("Could not find it and creating it...");
+                    logger.warn("Could not find it and creating - " + line[1]);
                     Company company = new Company(line[0], gicsIndustryGroup);
                     company = companyRepository.saveAndFlush(company);
                     security = new Security(line[1], company, exchange);
@@ -87,8 +86,6 @@ public class AsxOrdinaryShareLoader implements OrdinaryShareLoader {
             csvReader.close();
         } catch (IOException e) {
             logger.error(e.getMessage(), e);
-        } finally {
-            webClient.close();
         }
         logger.info("--Done--");
     }

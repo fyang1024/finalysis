@@ -39,11 +39,11 @@ public class AsxSecurityCodeChangeLoader implements SecurityCodeChangeLoader {
         Integer currentYear = calendar.get(Calendar.YEAR);
         Integer year = startYear;
         Date latestChangeDate = securityCodeChangeRepository.findLatestChangeDate();
-        if(latestChangeDate != null) {
+        if (latestChangeDate != null) {
             calendar.setTime(latestChangeDate);
             year = calendar.get(Calendar.YEAR);
         }
-        while(year <= currentYear) {
+        while (year <= currentYear) {
             WebDriver driver = new HtmlUnitDriver(BrowserVersion.CHROME);
             String url = exchange.getSecurityCodeChangeUrl();
             String modifiedUrl = url.replace("${year}", year.toString());
@@ -53,7 +53,7 @@ public class AsxSecurityCodeChangeLoader implements SecurityCodeChangeLoader {
             if (!tables.isEmpty()) {
                 List<WebElement> rows = tables.get(0).findElements(By.tagName("tr"));
                 int size = rows.size();
-                for (int i = size - 1; i>=0; i-- ) {
+                for (int i = size - 1; i >= 0; i--) {
                     WebElement row = rows.get(i);
                     List<WebElement> cells = row.findElements(By.tagName("td"));
                     if (!cells.isEmpty()) {
@@ -89,25 +89,41 @@ public class AsxSecurityCodeChangeLoader implements SecurityCodeChangeLoader {
         logger.info("--Done--");
     }
 
+    public void processCodeChangesOfToday(Exchange exchange) {
+        Date date = com.finalysis.research.DateUtils.today();
+        List<SecurityCodeChange> codeChanges = securityCodeChangeRepository.findCodeChangesOn(exchange, date);
+        for (SecurityCodeChange codeChange : codeChanges) {
+            Security security = codeChange.getSecurity();
+            if (security.getCode().equals(codeChange.getNewCode())) {
+                logger.warn(security.getCode() + " code changed before change date");
+            } else {
+                security.setCode(codeChange.getNewCode());
+                securityRepository.save(security);
+                logger.info(codeChange.getOldCode() + " changed to " + codeChange.getNewCode());
+            }
+        }
+        logger.info("--Done--");
+    }
+
     private void populateSecurity(Exchange exchange) {
         List<SecurityCodeChange> codeChanges = securityCodeChangeRepository.findBySecurityIsNull(exchange);
         List<SecurityCodeChange> linkedCodeChanges = new ArrayList<>();
         Iterator<SecurityCodeChange> iterator = codeChanges.iterator();
-        while(iterator.hasNext()) {
+        while (iterator.hasNext()) {
             SecurityCodeChange codeChange = iterator.next();
             SecurityCodeChange nextCodeChange = findNextCodeChange(linkedCodeChanges, codeChange);
-            if(nextCodeChange == null) {
+            if (nextCodeChange == null) {
                 linkedCodeChanges.add(codeChange);
             } else {
                 nextCodeChange.setPrevious(codeChange);
             }
             iterator.remove();
         }
-        for(SecurityCodeChange linkedCodeChange : linkedCodeChanges) {
+        for (SecurityCodeChange linkedCodeChange : linkedCodeChanges) {
             String currentCode = findCurrentCode(linkedCodeChange);
             Date changeDate = findCurrentCodeChangeDate(linkedCodeChange);
             Security security = securityRepository.findByCodeAndExchange(currentCode, exchange, changeDate);
-            if(security != null) {
+            if (security != null) {
                 logger.info(" Found security " + security.getCode() + " - " + security.getDescription());
                 setSecurity(linkedCodeChange, security);
             } else {
@@ -122,7 +138,7 @@ public class AsxSecurityCodeChangeLoader implements SecurityCodeChangeLoader {
         SecurityCodeChange codeChange = linkedCodeChange;
         codeChange.setSecurity(security);
         securityCodeChangeRepository.saveAndFlush(codeChange);
-        while(codeChange.getPrevious() != null) {
+        while (codeChange.getPrevious() != null) {
             codeChange = codeChange.getPrevious();
             codeChange.setSecurity(security);
             securityCodeChangeRepository.saveAndFlush(codeChange);
@@ -130,9 +146,9 @@ public class AsxSecurityCodeChangeLoader implements SecurityCodeChangeLoader {
     }
 
     private SecurityCodeChange findNextCodeChange(List<SecurityCodeChange> linkedCodeChanges, SecurityCodeChange codeChange) {
-        for(SecurityCodeChange linkedCodeChange : linkedCodeChanges) {
+        for (SecurityCodeChange linkedCodeChange : linkedCodeChanges) {
             SecurityCodeChange earliestCodeChange = findEarliestCodeChange(linkedCodeChange);
-            if(codeChange.getNewCode().equalsIgnoreCase(earliestCodeChange.getOldCode()) &&
+            if (codeChange.getNewCode().equalsIgnoreCase(earliestCodeChange.getOldCode()) &&
                     codeChange.getNewDescription().equalsIgnoreCase(earliestCodeChange.getOldDescription())) {
                 return earliestCodeChange;
             }
@@ -142,7 +158,7 @@ public class AsxSecurityCodeChangeLoader implements SecurityCodeChangeLoader {
 
     private SecurityCodeChange findEarliestCodeChange(SecurityCodeChange linkedCodeChange) {
         SecurityCodeChange earliestCodeChange = linkedCodeChange;
-        while(earliestCodeChange.getPrevious() != null) {
+        while (earliestCodeChange.getPrevious() != null) {
             earliestCodeChange = earliestCodeChange.getPrevious();
         }
         return earliestCodeChange;
@@ -151,7 +167,7 @@ public class AsxSecurityCodeChangeLoader implements SecurityCodeChangeLoader {
     private String findCurrentCode(SecurityCodeChange linkedCodeChange) {
         SecurityCodeChange currentCodeChange = linkedCodeChange;
         SecurityCodeChange nextCodeChange = currentCodeChange;
-        while(currentCodeChange != null && currentCodeChange.getChangeDate() != null && currentCodeChange.getChangeDate().after(new Date())) {
+        while (currentCodeChange != null && currentCodeChange.getChangeDate() != null && currentCodeChange.getChangeDate().after(new Date())) {
             nextCodeChange = currentCodeChange;
             currentCodeChange = currentCodeChange.getPrevious();
         }
@@ -161,7 +177,7 @@ public class AsxSecurityCodeChangeLoader implements SecurityCodeChangeLoader {
     private String findCurrentDescription(SecurityCodeChange linkedCodeChange) {
         SecurityCodeChange currentCodeChange = linkedCodeChange;
         SecurityCodeChange nextCodeChange = currentCodeChange;
-        while(currentCodeChange != null && currentCodeChange.getChangeDate().after(new Date())) {
+        while (currentCodeChange != null && currentCodeChange.getChangeDate().after(new Date())) {
             nextCodeChange = currentCodeChange;
             currentCodeChange = currentCodeChange.getPrevious();
         }
@@ -171,7 +187,7 @@ public class AsxSecurityCodeChangeLoader implements SecurityCodeChangeLoader {
     private Date findCurrentCodeChangeDate(SecurityCodeChange linkedCodeChange) {
         SecurityCodeChange currentCodeChange = linkedCodeChange;
         SecurityCodeChange nextCodeChange = currentCodeChange;
-        while(currentCodeChange != null &&  currentCodeChange.getChangeDate() != null &&  currentCodeChange.getChangeDate().after(new Date())) {
+        while (currentCodeChange != null && currentCodeChange.getChangeDate() != null && currentCodeChange.getChangeDate().after(new Date())) {
             nextCodeChange = currentCodeChange;
             currentCodeChange = currentCodeChange.getPrevious();
         }

@@ -7,6 +7,7 @@ import com.finalysis.research.reality.ShareRegistry;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.util.Calendar;
 import java.util.Date;
 
 @Entity
@@ -222,6 +223,13 @@ public class Security extends BaseMortalEntity {
             return company.getGicsSector().getName();
         }
         return null;
+    }
+
+    public Integer getDelistedYear() {
+        if (delistedDate == null) return null;
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(delistedDate);
+        return calendar.get(Calendar.YEAR);
     }
 
     @Override
