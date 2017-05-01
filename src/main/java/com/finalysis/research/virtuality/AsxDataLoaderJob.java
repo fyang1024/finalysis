@@ -83,7 +83,7 @@ public class AsxDataLoaderJob {
         }
     }
 
-    @Scheduled(cron = "0 0 0 * * MON-FRI")
+    @Scheduled(cron = "0 1 0 * * MON-FRI")
     public void processCodeChanges() {
         Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
         securityCodeChangeLoader.processCodeChangesOfToday(exchange);
