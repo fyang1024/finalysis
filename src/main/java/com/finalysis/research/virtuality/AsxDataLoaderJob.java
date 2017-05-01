@@ -73,7 +73,6 @@ public class AsxDataLoaderJob {
             securityPriceLoader.loadSecurityPrice(exchange);
             volumeExplosionDetector.detectVolumeExplosion(exchange, SecurityPricePeriod.Day, tradingDateService.getLatestTradingDate(exchange));
         }
-        asxUpcomingFloatDetailLoader.deleteWithdrawnFloats(exchange);
     }
 
     @Scheduled(cron = "0 30 12,15 * * MON-FRI")
@@ -109,7 +108,6 @@ public class AsxDataLoaderJob {
 //            momentumChaser.detectBreakout(exchange, SecurityPricePeriod.Day, tradingDateService.getLatestTradingDate(exchange));
             volumeExplosionDetector.detectVolumeExplosion(exchange, SecurityPricePeriod.Day, tradingDateService.getLatestTradingDate(exchange));
         }
-        asxUpcomingFloatDetailLoader.deleteWithdrawnFloats(exchange);
     }
 
     @Scheduled(cron = "0 0 0 1 JAN *")
@@ -138,5 +136,11 @@ public class AsxDataLoaderJob {
     public void loadSecurityInfo() {
         Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
         securityInfoLoader.loadInfo(exchange);
+    }
+
+    @Scheduled(cron = "0 0 18 * * SAT,SUN")
+    public void deleteWithdrawnFloats() {
+        Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
+        asxUpcomingFloatDetailLoader.deleteWithdrawnFloats(exchange);
     }
 }
