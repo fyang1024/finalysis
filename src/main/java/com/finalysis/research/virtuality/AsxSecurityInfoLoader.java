@@ -6,6 +6,8 @@ import com.gargoylesoftware.htmlunit.BrowserVersion;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,6 +99,8 @@ public class AsxSecurityInfoLoader implements SecurityInfoLoader {
             String realUrl = url.replace("${code}", security.getCode());
             logger.info(realUrl);
             driver.get(realUrl);
+            WebDriverWait wait = new WebDriverWait(driver, Integer.MAX_VALUE);
+            wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("company-details")));
             List<WebElement> infoTables = driver.findElements(By.className("company-details"));
             if (infoTables.isEmpty()) {
                 logger.error("Could not find company details table");
