@@ -126,7 +126,7 @@ public class VolumeExplosionDetector {
     void sendVolumeExplosionTips(Exchange exchange, SecurityPricePeriod day, Date openDate) {
         ExecutorService executorService = Executors.newCachedThreadPool();
         final int maxCodes = 10;
-        List<Security> securities = securityRepository.findActiveByExchange(exchange, openDate);
+        List<Security> securities = securityRepository.findActiveByExchange(exchange, openDate, SecurityType.ORDINARY_SHARE);
         List<Security> lastBunch = new ArrayList<>(maxCodes);
         int count = 0;
         for (Security security : securities) {
