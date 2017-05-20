@@ -122,7 +122,7 @@ public class AsxDataLoaderJob {
         exchangeRepository.findByName("Australian Securities Exchange");
     }
 
-    @Scheduled(cron = "0 0 12 * * SAT")
+//    @Scheduled(cron = "0 0 12 * * SAT")
     public void loadAnnouncements() {
         try {
             Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");

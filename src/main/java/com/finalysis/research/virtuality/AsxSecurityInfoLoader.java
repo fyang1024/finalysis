@@ -96,6 +96,11 @@ public class AsxSecurityInfoLoader implements SecurityInfoLoader {
         List<Security> securities = securityRepository.findSecuritiesToUpdateInfo(exchange, tradingDate);
         WebDriver driver = new ChromeDriver();
         for (Security security : securities) {
+            try {
+                Thread.sleep(new Double(1000 + 1000 * Math.random()).longValue());
+            } catch (InterruptedException e) {
+                logger.error(e.getMessage());
+            }
             String realUrl = url.replace("${code}", security.getCode());
             logger.info(realUrl);
             driver.get(realUrl);
