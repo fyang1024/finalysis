@@ -132,7 +132,7 @@ public class AsxDataLoaderJob {
         }
     }
 
-    @Scheduled(cron = "0 0 0 * * SUN")
+//    @Scheduled(cron = "0 0 0 * * SUN")
     public void loadSecurityInfo() {
         Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
         securityInfoLoader.loadInfo(exchange);
