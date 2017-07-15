@@ -150,6 +150,9 @@ public class SecurityPrice extends BaseEntity {
     }
 
     public BigDecimal getEstimatedTurnover() {
+        if(openPrice == null || closePrice == null || highestPrice == null || lowestPrice == null) {
+            return BigDecimal.ZERO;
+        }
         return openPrice.add(closePrice).add(highestPrice).add(lowestPrice)
                 .multiply(new BigDecimal(volume)).divide(new BigDecimal("4"));
     }
