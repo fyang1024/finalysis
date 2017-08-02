@@ -53,7 +53,7 @@ public class VolumeExplosionDetector {
         message.setTo("fyang1024@gmail.com");
         message.setFrom("fyang1024@gmail.com");
         message.setSubject(code);
-        message.setText(String.format("http://www.asx.com.au/asx/statistics/announcements.do?by=asxCode&asxCode=%s&timeframe=D&period=M6", code));
+        message.setText(String.format("http://www.asx.com.au/asx/statistics/announcements.do?timeframe=D&period=M6&by=asxCode&asxCode=%s", code));
         mailSender.send(message);
         logger.info("Email Sent");
     }
