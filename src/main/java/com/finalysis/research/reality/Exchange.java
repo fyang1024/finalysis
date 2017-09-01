@@ -41,6 +41,8 @@ public class Exchange extends BaseMortalEntity {
 
     private String todayAnnouncementUrl;
 
+    private String yesterdayAnnouncementUrl;
+
     private String announcementUrl;
 
     private String announcementArchive;
@@ -413,6 +415,14 @@ public class Exchange extends BaseMortalEntity {
 
     public void setTodayAnnouncementUrl(String todayAnnouncementUrl) {
         this.todayAnnouncementUrl = todayAnnouncementUrl;
+    }
+
+    public String getYesterdayAnnouncementUrl() {
+        return yesterdayAnnouncementUrl;
+    }
+
+    public void setYesterdayAnnouncementUrl(String yesterdayAnnouncementUrl) {
+        this.yesterdayAnnouncementUrl = yesterdayAnnouncementUrl;
     }
 
     @Override

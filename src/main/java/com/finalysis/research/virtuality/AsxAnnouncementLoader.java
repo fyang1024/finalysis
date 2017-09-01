@@ -47,6 +47,21 @@ class AsxAnnouncementLoader implements AnnouncementLoader {
         logger.info("Loading today's announcements");
         SecurityType ordinaryShare = securityTypeRepository.findByName("Ordinary Share");
         String url = exchange.getTodayAnnouncementUrl();
+        loadAnnouncements(exchange, ordinaryShare, url);
+        logger.info("--Done--");
+    }
+
+    @Override
+    public void loadYesterdayAnnouncements(Exchange exchange) {
+        logger.info("Loading yesterday's announcements");
+        SecurityType ordinaryShare = securityTypeRepository.findByName("Ordinary Share");
+        String url = exchange.getYesterdayAnnouncementUrl();
+        loadAnnouncements(exchange, ordinaryShare, url);
+        logger.info("--Done--");
+    }
+
+
+    private void loadAnnouncements(Exchange exchange, SecurityType securityType, String url) {
         ChromeDriver driver = new ChromeDriver();
         driver.get(url);
         WebDriverWait wait = new WebDriverWait(driver, Integer.MAX_VALUE);
@@ -61,12 +76,17 @@ class AsxAnnouncementLoader implements AnnouncementLoader {
             for (int j = rows.size() - 1; j > 0; j--) {
                 WebElement row = rows.get(j);
                 List<WebElement> codeCells = row.findElements(By.tagName("th"));
-                String code = codeCells.get(0).getText();
+                String code;
+                if (!codeCells.isEmpty()) {
+                    code = codeCells.get(0).getText();
+                } else {
+                    code = row.findElements(By.tagName("td")).get(0).getText();
+                }
                 Security security = securityRepository.findByCodeAndExchange(code, exchange, announcementDate);
                 if (security != null) {
-                    if (security.getSecurityType().getId().equals(ordinaryShare.getId())) {
+                    if (security.getSecurityType().getId().equals(securityType.getId())) {
                         List<WebElement> cells = row.findElements(By.tagName("td"));
-                        String headline = cells.get(2).getText();
+                        String headline = cells.get(codeCells.isEmpty() ? 3 : 2).getText();
                         String key = code + " - " + headline;
                         logger.info(key);
                         if (counter.get(key) == null) {
@@ -76,10 +96,10 @@ class AsxAnnouncementLoader implements AnnouncementLoader {
                         }
                         List<Announcement> announcements = announcementRepository.findByExchangeAndSecurityAndAnnouncementDateAndHeadline(exchange, security, announcementDate, headline);
                         if (counter.get(key) > announcements.size()) {
-                            boolean priceSensitive = !cells.get(1).findElements(By.tagName("img")).isEmpty();
+                            boolean priceSensitive = !cells.get(codeCells.isEmpty() ? 2 : 1).findElements(By.tagName("img")).isEmpty();
                             Announcement announcement = new Announcement(exchange, security, code, announcementDate, priceSensitive, headline);
-                            if (cells.get(3).getText().matches("\\d+")) {
-                                announcement.setPages(Integer.parseInt(cells.get(3).getText()));
+                            if (cells.get(codeCells.isEmpty() ? 4 : 3).getText().matches("\\d+")) {
+                                announcement.setPages(Integer.parseInt(cells.get(codeCells.isEmpty() ? 4 : 3).getText()));
                             }
                             String filePath = generateFileName(headline);
 //                            List<WebElement> pdfLinks = cells.get(4).findElements(By.tagName("a"));
@@ -109,7 +129,6 @@ class AsxAnnouncementLoader implements AnnouncementLoader {
             }
             driver.close();
         }
-        logger.info("--Done--");
     }
 
     @Override

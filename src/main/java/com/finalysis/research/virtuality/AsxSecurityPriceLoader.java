@@ -16,6 +16,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import yahoofinance.Stock;
 import yahoofinance.YahooFinance;
+import yahoofinance.histquotes.HistoricalQuote;
+import yahoofinance.histquotes.Interval;
 import yahoofinance.quotes.stock.StockQuote;
 
 import java.io.File;
@@ -45,13 +47,81 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
     @Autowired
     TradingDateService tradingDateService;
 
-    //TODO load from Yahoo! Finance API
     @Override
     public void loadSecurityPrice(Exchange exchange) {
         loadFromArchive(exchange);
         loadFromInternet(exchange);
         logger.info("--Done--");
     }
+
+    @Override
+    public void loadSecurityPrice(Exchange exchange, Date from, Date to) {
+        List<Security> securities = securityRepository.findActiveByExchange(exchange, from);
+        List<Security> lastBunch = new ArrayList<>(maxCodes);
+        int count = 0;
+        for (Security security : securities) {
+            if (count < maxCodes) {
+                lastBunch.add(security);
+                count++;
+            } else {
+                securityPriceRepository.save(loadHistoricalFromYahoo(exchange, lastBunch, from, to));
+                lastBunch.clear();
+                lastBunch.add(security);
+                count = 1;
+            }
+        }
+        if (!lastBunch.isEmpty()) {
+            securityPriceRepository.save(loadHistoricalFromYahoo(exchange, lastBunch, from, to));
+        }
+    }
+
+    private List<SecurityPrice> loadHistoricalFromYahoo(Exchange exchange, List<Security> lastBunch, Date fromDate, Date toDate) {
+        List<SecurityPrice> securityPriceList = new ArrayList<>();
+        Map<String, Security> map = buildMap(lastBunch);
+        String[] codes = lastBunch.stream().map(s -> s.getCode() + ".AX").collect(Collectors.toSet()).toArray(new String[lastBunch.size()]);
+        Calendar from = Calendar.getInstance();
+        from.setTime(fromDate);
+        Calendar to = Calendar.getInstance();
+        to.setTime(toDate);
+        for (String yahooCode : codes) {
+            try {
+                Stock stock = YahooFinance.get(yahooCode, from, to, Interval.DAILY);
+                String code = stock.getSymbol().replace(".AX", "");
+                logger.info("Load price - " + code);
+                List<HistoricalQuote> history = stock.getHistory();
+                logger.info("history : " + history.size());
+                for (HistoricalQuote quote : history) {
+                    Date date = quote.getDate().getTime();
+                    SecurityPrice securityPrice = securityPriceRepository.findByCodeAndExchangeAndOpenDate(code, exchange, date);
+                    if (securityPrice == null) {
+                        Security security = map.get(code);
+                        if (security.getListingDate() != null && !security.getListingDate().after(date)
+                                && quote.getVolume() != null && quote.getVolume() > 0
+                                ) {
+                            securityPrice = new SecurityPrice();
+                            securityPrice.setCode(code);
+                            securityPrice.setExchange(exchange);
+                            securityPrice.setOpenDate(date);
+                            securityPrice.setCloseDate(date);
+                            securityPrice.setSecurity(security);
+                            securityPrice.setOpenPrice(quote.getOpen());
+                            securityPrice.setHighestPrice(quote.getHigh());
+                            securityPrice.setLowestPrice(quote.getLow());
+                            securityPrice.setClosePrice(quote.getClose());
+                            securityPrice.setVolume(quote.getVolume().intValue());
+                            securityPriceList.add(securityPrice);
+                        }
+                    } else {
+                        securityPriceList.add(securityPrice);
+                    }
+                }
+            } catch (Exception e) {
+                logger.error(e.getMessage());
+            }
+        }
+        return securityPriceList;
+    }
+
 
     private void loadFromInternet(Exchange exchange) {
         Date date = tradingDateService.getLatestTradingDate(exchange);

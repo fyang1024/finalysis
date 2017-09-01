@@ -7,5 +7,7 @@ public interface AnnouncementLoader {
     void loadAnnouncements(Exchange exchange);
 
     void loadTodayAnnouncements(Exchange exchange);
+
+    void loadYesterdayAnnouncements(Exchange exchange);
 }
 

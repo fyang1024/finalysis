@@ -1,5 +1,6 @@
 package com.finalysis.research.virtuality;
 
+import com.finalysis.research.DateUtils;
 import com.finalysis.research.reality.Exchange;
 import com.finalysis.research.reality.ExchangeRepository;
 import org.slf4j.Logger;
@@ -7,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+
+import java.util.Date;
 
 /**
  * Created by Fei on 28/08/2014.
@@ -108,6 +111,21 @@ public class AsxDataLoaderJob {
 //            momentumChaser.detectBreakout(exchange, SecurityPricePeriod.Day, tradingDateService.getLatestTradingDate(exchange));
             volumeExplosionDetector.detectVolumeExplosion(exchange, SecurityPricePeriod.Day, tradingDateService.getLatestTradingDate(exchange));
         }
+    }
+
+//    @Scheduled(cron = "0 10 16 * * TUE")
+    public void loadHistoricalData() {
+        Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
+        Date from = DateUtils.parse("14/08/2017", DateUtils.AUSSIE_DATE_FORMAT);
+        Date to = from;
+        securityPriceLoader.loadSecurityPrice(exchange, from, to);
+        logger.info("--Done--");
+    }
+
+//    @Scheduled(cron = "0 10 22 * * TUE")
+    public void loadYesterdayAnnouncements() {
+        Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
+        announcementLoader.loadYesterdayAnnouncements(exchange);
     }
 
     @Scheduled(cron = "0 0 0 1 JAN *")

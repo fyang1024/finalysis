@@ -7,4 +7,6 @@ import java.util.Date;
 public interface SecurityPriceLoader {
 
     void loadSecurityPrice(Exchange exchange);
+
+    void loadSecurityPrice(Exchange exchange, Date from, Date to);
 }
