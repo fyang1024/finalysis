@@ -71,7 +71,7 @@ public class AsxDataLoaderJob {
     @Scheduled(cron = "0 1 22 * * MON-FRI")
     public void loadTodayAnnouncements() {
         Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
-        announcementLoader.loadTodayAnnouncements(exchange);
+        // announcementLoader.loadTodayAnnouncements(exchange);
         if (tradingDateService.isTodayTradingDay(exchange)) {
             securityPriceLoader.loadSecurityPrice(exchange);
             volumeExplosionDetector.detectVolumeExplosion(exchange, SecurityPricePeriod.Day, tradingDateService.getLatestTradingDate(exchange));
@@ -113,10 +113,10 @@ public class AsxDataLoaderJob {
         }
     }
 
-//    @Scheduled(cron = "0 10 16 * * TUE")
+//    @Scheduled(cron = "0 14 09 * * FRI")
     public void loadHistoricalData() {
         Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
-        Date from = DateUtils.parse("14/08/2017", DateUtils.AUSSIE_DATE_FORMAT);
+        Date from = DateUtils.parse("05/10/2017", DateUtils.AUSSIE_DATE_FORMAT);
         Date to = from;
         securityPriceLoader.loadSecurityPrice(exchange, from, to);
         logger.info("--Done--");
