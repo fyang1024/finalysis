@@ -49,9 +49,11 @@ public class AsxSecurityInfoLoader implements SecurityInfoLoader {
     private TradingDateService tradingDateService;
 
     public void loadListingDate(Exchange exchange) {
-        WebDriver driver = new HtmlUnitDriver(BrowserVersion.CHROME);
+        WebDriver driver = new ChromeDriver();
         logger.info(exchange.getRecentFloatsUrl());
         driver.get(exchange.getRecentFloatsUrl());
+        WebDriverWait wait = new WebDriverWait(driver, Integer.MAX_VALUE);
+        wait.until(ExpectedConditions.visibilityOfElementLocated(By.className("floats")));
         List<WebElement> tables = driver.findElements(By.cssSelector("table.floats"));
         if (tables.isEmpty()) {
             logger.error("Could not find recent floats table");
@@ -87,6 +89,7 @@ public class AsxSecurityInfoLoader implements SecurityInfoLoader {
                 }
             }
         }
+        driver.close();
         logger.info("--Done--");
     }
 
