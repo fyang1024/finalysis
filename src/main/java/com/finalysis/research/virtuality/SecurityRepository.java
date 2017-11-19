@@ -39,4 +39,7 @@ public interface SecurityRepository extends JpaRepository<Security, Integer> {
     List<Security> findActiveByExchange(Exchange exchange, Date date, String securityType);
 
     Security findByCodeAndExchangeAndDelistedDate(String code, Exchange exchange, Date delistedDate);
+
+    @Query(value = "select * from security where listing_date > '2017-01-01' and (select min(open_date) from security_price where security = security.id) > listing_date", nativeQuery = true)
+    List<Security> findSecuritiesMissingPrice();
 }

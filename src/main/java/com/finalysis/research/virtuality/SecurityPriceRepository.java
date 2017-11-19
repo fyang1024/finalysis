@@ -24,6 +24,9 @@ public interface SecurityPriceRepository extends JpaRepository<SecurityPrice, In
     @Query("select min(p.openDate) from SecurityPrice p where p.security = ?1 and p.period = ?2 and p.swingPointLow IS NULL and volume > 0")
     Date findEarliestDateToMarkSwingPointLow(Security security, SecurityPricePeriod securityPricePeriod);
 
+    @Query("select min(p.openDate) from SecurityPrice p where p.security = ?1 and p.period = ?2")
+    Date findEarliestOpenDate(Security security, SecurityPricePeriod securityPricePeriod);
+
     @Query("select p from SecurityPrice p where p.security = ?1 and p.period = ?2 and p.openDate >= ?3 and p.volume > 0 order by p.openDate")
     List<SecurityPrice> findSecurityPriceOnAfter(Security security, SecurityPricePeriod securityPricePeriod, Date openDate);
 

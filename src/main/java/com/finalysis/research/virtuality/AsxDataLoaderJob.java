@@ -9,7 +9,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Created by Fei on 28/08/2014.
@@ -25,6 +27,9 @@ public class AsxDataLoaderJob {
 
     @Autowired
     SecurityRepository securityRepository;
+
+    @Autowired
+    SecurityPriceRepository securityPriceRepository;
 
     @Autowired
     AsxSecurityCodeChangeLoader securityCodeChangeLoader;
@@ -113,12 +118,18 @@ public class AsxDataLoaderJob {
         }
     }
 
-//    @Scheduled(cron = "0 14 09 * * FRI")
+//    @Scheduled(cron = "0 22 12 * * SUN")
     public void loadHistoricalData() {
         Exchange exchange = exchangeRepository.findByName("Australian Securities Exchange");
-        Date from = DateUtils.parse("05/10/2017", DateUtils.AUSSIE_DATE_FORMAT);
-        Date to = from;
-        securityPriceLoader.loadSecurityPrice(exchange, from, to);
+        List<Security> securityList = securityRepository.findSecuritiesMissingPrice();
+        for(Security security : securityList) {
+            Date earliestOpenDate = securityPriceRepository.findEarliestOpenDate(security, SecurityPricePeriod.Day);
+            if (earliestOpenDate == null) earliestOpenDate = tradingDateService.getLatestTradingDate(exchange);
+            Date from = security.getListingDate();
+            Date to = earliestOpenDate;
+            securityPriceLoader.loadHistoricalFromYahoo(exchange, Arrays.asList(security), from, to);
+
+        }
         logger.info("--Done--");
     }
 

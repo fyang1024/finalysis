@@ -75,7 +75,7 @@ public class AsxSecurityPriceLoader implements SecurityPriceLoader {
         }
     }
 
-    private List<SecurityPrice> loadHistoricalFromYahoo(Exchange exchange, List<Security> lastBunch, Date fromDate, Date toDate) {
+    public List<SecurityPrice> loadHistoricalFromYahoo(Exchange exchange, List<Security> lastBunch, Date fromDate, Date toDate) {
         List<SecurityPrice> securityPriceList = new ArrayList<>();
         Map<String, Security> map = buildMap(lastBunch);
         String[] codes = lastBunch.stream().map(s -> s.getCode() + ".AX").collect(Collectors.toSet()).toArray(new String[lastBunch.size()]);
